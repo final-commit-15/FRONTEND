@@ -92,14 +92,14 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           trigger={
             <button className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-base-800 transition-colors">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-electric-500 to-violet-600 flex items-center justify-center text-white font-semibold text-sm">
-                {user?.name?.[0] || 'U'}
+                {user?.full_name?.[0] || 'U'}
               </div>
             </button>
           }
         >
           <div className="w-56 p-2">
             <div className="px-3 py-2 border-b border-base-800">
-              <p className="text-sm font-medium text-white">{user?.name || 'User'}</p>
+              <p className="text-sm font-medium text-white">{user?.full_name || 'User'}</p>
               <p className="text-xs text-base-500">{user?.email || 'No email'}</p>
             </div>
             <div className="mt-2 space-y-1">

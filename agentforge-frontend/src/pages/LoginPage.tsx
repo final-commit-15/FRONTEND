@@ -42,7 +42,7 @@ export function LoginPage() {
         title: 'Welcome back',
         description: 'Successfully signed in.',
       });
-      navigate('/dashboard');
+      navigate('/dashboard',{replace: true});
     } catch (error) {
       addToast({
         type: 'error',

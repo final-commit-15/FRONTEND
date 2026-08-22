@@ -45,6 +45,7 @@ export function RegisterPage() {
   const password = watch('password');
 
   const onSubmit = async (data: RegisterFormData) => {
+    console.log('Submit fired', data); // Debugging log
     // Remove confirmPassword before sending to API
     const { confirmPassword, ...payload } = data;
 
@@ -55,15 +56,21 @@ export function RegisterPage() {
         title: 'Account created',
         description: 'Welcome to AgentForge.',
       });
-      navigate('/dashboard');
-    } catch (error) {
-      addToast({
-        type: 'error',
-        title: 'Registration failed',
-        description: error instanceof Error ? error.message : 'Unable to create account.',
-      });
-    }
-  };
+      navigate('/dashboard',{replace: true});
+    } catch (error: any) {
+        const message =
+          error?.response?.data?.detail ||
+          error?.response?.data?.message ||
+          error?.message ||
+          "Registration failed";
+
+        addToast({
+          type: "error",
+          title: "Registration failed",
+          description: message,
+        });
+      }
+    };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

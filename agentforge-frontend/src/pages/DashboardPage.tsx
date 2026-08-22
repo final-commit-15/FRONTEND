@@ -22,12 +22,14 @@ export function DashboardPage() {
   const overviewQuery = useQuery({
     queryKey: ['analytics', 'overview'],
     queryFn: () => analyticsApi.getOverview(),
+    retry: false,
   });
 
   // Recent executions – use limit instead of page_size
   const recentExecutionsQuery = useQuery({
     queryKey: ['executions', 'recent'],
     queryFn: () => executionsApi.list({ limit: 5 }),
+    retry: false,
   });
 
   // ── Combined loading / error states ──────────────────────
@@ -60,7 +62,7 @@ export function DashboardPage() {
   // ── Data ────────────────────────────────────────────────────
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  const firstName = user?.name?.split(' ')[0] || 'User';
+  const firstName = user?.full_name?.split(' ')[0] || 'User';
 
   return (
     <div className="space-y-6">

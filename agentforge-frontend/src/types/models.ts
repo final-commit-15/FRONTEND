@@ -1,11 +1,15 @@
 export interface User {
   id: string;
-  name: string;
   email: string;
-  role: 'admin' | 'user' | 'viewer';
-  avatar_url?: string;
-  created_at: string;
+  username: string;
+  full_name: string;
+  role: "admin" | "developer" | "operator" | "user" | "viewer";
+  is_active: boolean;
+  is_verified: boolean;
+  created_at?: string;
 }
+
+// Keep other types as is (Agent, Task, Execution, etc.)
 
 export type UserRole = User['role']; // 'admin' | 'user' | 'viewer'
 

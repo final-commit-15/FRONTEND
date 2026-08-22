@@ -6,7 +6,7 @@ import type { SystemHealth } from '@/types/api';
 export const systemApi = {
   // Keep your existing method
   getHealth: async (): Promise<SystemHealth> => {
-    const { data } = await apiClient.get<SystemHealth>('/system/health');
+    const { data } = await apiClient.get<SystemHealth>('/health');
     return data;
   },
 

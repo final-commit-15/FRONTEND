@@ -3,6 +3,7 @@
 import { apiClient } from './client';
 import type { Permission } from '@/types/api';
 
+
 export const permissionsApi = {
   // List all permissions (optional filter for agent or role)
   list: async (params?: { role?: string; agent_id?: string }): Promise<Permission[]> => {
