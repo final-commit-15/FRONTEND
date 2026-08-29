@@ -6,7 +6,7 @@ import { toolsApi } from '@/api/tools';
 import type { Tool } from '@/types/api';
 
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Table, TableColumn } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -15,24 +15,6 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 
-// ─── Skeleton ──────────────────────────────────────────────
-function ToolsSkeleton() {
-  return (
-    <Card className="p-6 space-y-3">
-      <div className="flex gap-4">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-10 w-40" />
-        <Skeleton className="h-10 w-32 ml-auto" />
-      </div>
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-    </Card>
-  );
-}
-
-// ─── Category badge helper ────────────────────────────────
 function getCategoryVariant(category: string): 'success' | 'warning' | 'info' | 'neutral' {
   switch (category?.toLowerCase()) {
     case 'ai':
@@ -66,7 +48,19 @@ export function ToolsPage() {
       }),
   });
 
-  if (isLoading) return <ToolsSkeleton />;
+  if (isLoading) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        <Skeleton variant="title" className="w-56" />
+        <Card>
+          <CardContent className="pt-0">
+            <Skeleton variant="card" className="h-60" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <ErrorState
@@ -77,7 +71,6 @@ export function ToolsPage() {
     );
   }
 
-  // ─── Safe array extraction ──────────────────────────────
   const rawTools = tools;
   const allTools = (() => {
     if (Array.isArray(rawTools)) return rawTools;
@@ -96,17 +89,16 @@ export function ToolsPage() {
       tool.description?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ─── Table columns ────────────────────────────────────────
   const columns: TableColumn<Tool>[] = [
     {
       key: 'name',
       label: 'Name',
-      render: (_, row) => <span className="font-medium text-white">{row.name}</span>,
+      render: (_, row) => <span className="font-medium text-text-heading">{row.name}</span>,
     },
     {
       key: 'description',
       label: 'Description',
-      render: (value) => <span className="text-base-400">{value || '—'}</span>,
+      render: (value) => <span className="text-text-muted">{value || '—'}</span>,
     },
     {
       key: 'category',
@@ -128,42 +120,8 @@ export function ToolsPage() {
     },
   ];
 
-  // ─── Empty state ──────────────────────────────────────────
-  if (filteredTools.length === 0) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Tools" description="Available tools for agents." />
-        <div className="flex flex-wrap gap-4 items-center">
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search tools..."
-            className="max-w-sm"
-          />
-          <div className="flex gap-2">
-            {['all', 'ai', 'system', 'integration'].map((cat) => (
-              <Button
-                key={cat}
-                variant={category === cat ? 'primary' : 'secondary'}
-                size="sm"
-                onClick={() => setCategory(cat)}
-              >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </Button>
-            ))}
-          </div>
-        </div>
-        <EmptyState
-          title="No tools match your filters"
-          description="Try adjusting your search or category filter."
-        />
-      </div>
-    );
-  }
-
-  // ─── Main render ──────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader title="Tools" description="Available tools for agents." />
 
       <div className="flex flex-wrap gap-4 items-center">
@@ -187,9 +145,16 @@ export function ToolsPage() {
         </div>
       </div>
 
-      <div className="card overflow-hidden">
-        <Table columns={columns} data={filteredTools} />
-      </div>
+      {filteredTools.length === 0 ? (
+        <EmptyState
+          title="No tools match your filters"
+          description="Try adjusting your search or category filter."
+        />
+      ) : (
+        <Card className="overflow-hidden">
+          <Table columns={columns} data={filteredTools} striped hoverable />
+        </Card>
+      )}
     </div>
   );
 }

@@ -16,23 +16,6 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 
-// ─── Skeleton loader ──────────────────────────────────────────
-function PermissionsSkeleton() {
-  return (
-    <Card className="p-6 space-y-3">
-      <div className="flex gap-4">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-10 w-40" />
-      </div>
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-    </Card>
-  );
-}
-
-// ─── Helper: ensure array from various API shapes ──────────
 function ensureArray<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data;
   if (data && typeof data === 'object') {
@@ -71,7 +54,22 @@ export function PermissionsPage() {
     },
   });
 
-  if (isLoading) return <PermissionsSkeleton />;
+  if (isLoading) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        <Skeleton variant="title" className="w-56" />
+        <Card>
+          <div className="p-6 space-y-3">
+            <Skeleton variant="rectangular" className="h-12" />
+            <Skeleton variant="rectangular" className="h-12" />
+            <Skeleton variant="rectangular" className="h-12" />
+            <Skeleton variant="rectangular" className="h-12" />
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <ErrorState
@@ -82,7 +80,6 @@ export function PermissionsPage() {
     );
   }
 
-  // ─── Safe array extraction ──────────────────────────────────
   const allPermissions = ensureArray<Permission>(permissions);
   const filtered = allPermissions.filter(
     (p) =>
@@ -91,17 +88,16 @@ export function PermissionsPage() {
       p.associated_agent?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // ─── Table columns ──────────────────────────────────────────
   const columns: TableColumn<Permission>[] = [
     {
       key: 'name',
       label: 'Name',
-      render: (_, row) => <span className="font-medium text-white">{row.name}</span>,
+      render: (_, row) => <span className="font-medium text-text-heading">{row.name}</span>,
     },
     {
       key: 'description',
       label: 'Description',
-      render: (value) => <span className="text-base-400">{value || '—'}</span>,
+      render: (value) => <span className="text-text-muted">{value || '—'}</span>,
     },
     {
       key: 'granted',
@@ -115,7 +111,7 @@ export function PermissionsPage() {
     {
       key: 'associated_agent',
       label: 'Associated Agent',
-      render: (value) => <span>{value || '—'}</span>,
+      render: (value) => <span className="text-text-muted">{value || '—'}</span>,
     },
     {
       key: 'id',
@@ -139,7 +135,7 @@ export function PermissionsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader title="Permissions" description="Manage agent permissions." />
 
       <div className="flex flex-wrap gap-4 items-center">
@@ -166,9 +162,9 @@ export function PermissionsPage() {
           description="Try adjusting your search or filters."
         />
       ) : (
-        <div className="card overflow-hidden">
-          <Table columns={columns} data={filtered} />
-        </div>
+        <Card className="overflow-hidden">
+          <Table columns={columns} data={filtered} striped hoverable />
+        </Card>
       )}
     </div>
   );

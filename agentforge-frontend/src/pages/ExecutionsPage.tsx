@@ -15,21 +15,7 @@ import { Button } from '@/components/ui/Button';
 import { Plus, RefreshCw } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { useWebSocket } from '@/hooks/useWebSocket';
-
-// ─── Helper: Table skeleton ──────────────────────────────────
-function TableSkeleton({ rows = 10, cols = 6 }: { rows?: number; cols?: number }) {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex gap-4">
-          {Array.from({ length: cols }).map((_, j) => (
-            <Skeleton key={j} className="h-8 flex-1" />
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
+import { Card } from '@/components/ui/Card';
 
 export function ExecutionsPage() {
   const navigate = useNavigate();
@@ -40,7 +26,6 @@ export function ExecutionsPage() {
     sortBy: '-started_at',
   });
 
-  // ── Query: list executions ──────────────────────────────────
   const {
     data,
     isLoading,
@@ -58,7 +43,6 @@ export function ExecutionsPage() {
     refetchInterval: 15000,
   });
 
-  // ── WebSocket live updates ─────────────────────────────────
   const { lastMessage, connected } = useWebSocket('/ws/executions');
 
   useEffect(() => {
@@ -67,7 +51,6 @@ export function ExecutionsPage() {
     }
   }, [lastMessage, queryClient]);
 
-  // ── Mutations ───────────────────────────────────────────────
   const cancelMutation = useMutation({
     mutationFn: (id: string) => executionsApi.cancel(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['executions'] }),
@@ -78,20 +61,17 @@ export function ExecutionsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['executions'] }),
   });
 
-  // ── Render ──────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Executions"
         description="Monitor and manage agent execution runs."
-        // ✅ removed `action` prop – not supported
       />
 
-      {/* Toolbar with refresh and new execution buttons */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           {connected && (
-            <div className="flex items-center gap-2 text-sm text-success-500">
+            <div className="flex items-center gap-2 text-sm text-success-600">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-500 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-success-500" />
@@ -124,7 +104,15 @@ export function ExecutionsPage() {
       />
 
       {isLoading ? (
-        <TableSkeleton rows={10} cols={6} />
+        <Card className="p-4 space-y-3">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="flex gap-4">
+              {Array.from({ length: 6 }).map((_, j) => (
+                <Skeleton key={j} variant="text" className="h-8 flex-1" />
+              ))}
+            </div>
+          ))}
+        </Card>
       ) : error ? (
         <ErrorState
           title="Failed to load executions"
@@ -135,8 +123,7 @@ export function ExecutionsPage() {
         <EmptyState
           title="No executions yet"
           description="Run an agent against a task to see execution results here."
-          actionLabel="Create Execution"
-          onAction={() => navigate('/executions/new')}
+          action={<Button onClick={() => navigate('/executions/new')} icon={<Plus size={18} />}>Create Execution</Button>}
         />
       ) : (
         <ExecutionList

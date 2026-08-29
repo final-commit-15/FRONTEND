@@ -11,8 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
-// ─── Form schema ─────────────────────────────────────────────
 const registerSchema = z
   .object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -29,7 +29,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { register: registerUser } = useAuth(); // renamed to avoid conflict with react-hook-form's register
+  const { register: registerUser } = useAuth();
   const { addToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -45,8 +45,6 @@ export function RegisterPage() {
   const password = watch('password');
 
   const onSubmit = async (data: RegisterFormData) => {
-    console.log('Submit fired', data); // Debugging log
-    // Remove confirmPassword before sending to API
     const { confirmPassword, ...payload } = data;
 
     try {
@@ -56,42 +54,43 @@ export function RegisterPage() {
         title: 'Account created',
         description: 'Welcome to AgentForge.',
       });
-      navigate('/dashboard',{replace: true});
+      navigate('/dashboard', { replace: true });
     } catch (error: any) {
-        const message =
-          error?.response?.data?.detail ||
-          error?.response?.data?.message ||
-          error?.message ||
-          "Registration failed";
+      const message =
+        error?.response?.data?.detail ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Registration failed';
 
-        addToast({
-          type: "error",
-          title: "Registration failed",
-          description: message,
-        });
-      }
-    };
+      addToast({
+        type: 'error',
+        title: 'Registration failed',
+        description: message,
+      });
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-canvas">
       <div className="w-full max-w-md">
         {/* Logo & Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-electric-500 to-violet-600 mb-4">
-            <span className="text-white font-bold text-xl">AF</span>
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-primary-dark mx-auto mb-6">
+            <span className="font-logo font-bold text-white text-xl">AF</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Create account</h1>
-          <p className="text-base-400 mt-2">Start orchestrating AI agents</p>
+          <h1 className="font-heading text-3xl font-bold text-text-heading">Create account</h1>
+          <p className="text-text-body mt-2">Start orchestrating AI agents</p>
         </div>
 
         {/* Form */}
-        <div className="glass rounded-2xl p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Card className="p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input
               label="Full Name"
               placeholder="Your name"
               {...register('name')}
               error={errors.name?.message}
+              autoComplete="name"
             />
 
             <Input
@@ -100,45 +99,45 @@ export function RegisterPage() {
               placeholder="you@company.com"
               {...register('email')}
               error={errors.email?.message}
+              autoComplete="email"
             />
 
-            <div>
-              <label className="label">Password</label>
+            <div className="space-y-1.5">
+              <label htmlFor="password" className="label">Password</label>
               <div className="relative">
                 <Input
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Create a password"
                   {...register('password')}
                   error={errors.password?.message}
-                  className="pr-10"
+                  className="pr-12"
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-base-500 hover:text-white"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-heading"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {errors.password && <p className="error-text">{errors.password.message}</p>}
             </div>
 
             <Input
               label="Confirm Password"
               type="password"
               placeholder="Confirm your password"
-              {...register('confirmPassword', {
-                validate: (value) =>
-                  value === password || 'Passwords do not match',
-              })}
+              {...register('confirmPassword')}
               error={errors.confirmPassword?.message}
+              autoComplete="new-password"
             />
 
             {registerUser.isError && (
-              <div className="p-3 bg-error-700/10 border border-error-700/30 rounded-lg text-sm text-error-500">
-                {registerUser.error instanceof Error
-                  ? registerUser.error.message
-                  : 'Registration failed'}
+              <div className="p-3 bg-error-50 border border-error-100 rounded-xl text-sm text-error-600">
+                {registerUser.error instanceof Error ? registerUser.error.message : 'Registration failed'}
               </div>
             )}
 
@@ -146,6 +145,7 @@ export function RegisterPage() {
               type="submit"
               disabled={registerUser.isPending || isSubmitting}
               className="w-full"
+              size="lg"
             >
               {registerUser.isPending ? (
                 <Loader2 className="animate-spin" size={18} />
@@ -157,11 +157,11 @@ export function RegisterPage() {
               )}
             </Button>
           </form>
-        </div>
+        </Card>
 
-        <p className="text-center text-sm text-base-400 mt-6">
+        <p className="text-center text-sm text-text-muted mt-8">
           Already have an account?{' '}
-          <Link to="/login" className="text-electric-400 hover:text-electric-300 font-medium">
+          <Link to="/login" className="font-medium text-brand-primary hover:text-brand-primary-hover">
             Sign in
           </Link>
         </p>

@@ -13,19 +13,18 @@ import { ExecutionActivityChart } from '../components/dashboard/ExecutionActivit
 import { AgentPerformance } from '../components/dashboard/AgentPerformance';
 import { RecentExecutions } from '../components/dashboard/RecentExecutions';
 import { SystemHealth } from '../components/dashboard/SystemHealth';
+import { Card } from '../components/ui/Card';
 
 export function DashboardPage() {
   const { user } = useAuth();
 
   // ── Queries ──────────────────────────────────────────────────
-  // Use correct method names – assuming getOverview exists
   const overviewQuery = useQuery({
     queryKey: ['analytics', 'overview'],
     queryFn: () => analyticsApi.getOverview(),
     retry: false,
   });
 
-  // Recent executions – use limit instead of page_size
   const recentExecutionsQuery = useQuery({
     queryKey: ['executions', 'recent'],
     queryFn: () => executionsApi.list({ limit: 5 }),
@@ -38,10 +37,10 @@ export function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-56" />
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-80 w-full" />
+      <div className="space-y-6 animate-fade-in">
+        <Skeleton variant="title" className="w-56" />
+        <Skeleton variant="card" className="h-32" />
+        <Skeleton variant="card" className="h-80" />
       </div>
     );
   }
@@ -65,18 +64,16 @@ export function DashboardPage() {
   const firstName = user?.full_name?.split(' ')[0] || 'User';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={`${greeting}, ${firstName}`}
         description="Here's what's happening across your AI operations."
       />
 
-      {/* KpiGrid fetches its own data – no props needed */}
       <KpiGrid />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          {/* ExecutionActivityChart fetches its own data – no props */}
           <ExecutionActivityChart />
         </div>
         <div>
@@ -86,7 +83,6 @@ export function DashboardPage() {
 
       <AgentPerformance />
 
-      {/* RecentExecutions fetches its own data – no props */}
       <RecentExecutions />
     </div>
   );

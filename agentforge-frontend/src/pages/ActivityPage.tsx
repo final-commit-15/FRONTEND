@@ -25,10 +25,8 @@ import {
   Play,
 } from 'lucide-react';
 
-// ─── Type for filter ─────────────────────────────────────────
 type ActivityFilter = 'all' | 'agent' | 'task' | 'execution' | 'system';
 
-// ─── Icon mapping ────────────────────────────────────────────
 const eventIcons: Record<string, React.ElementType> = {
   agent_created: Plus,
   agent_updated: Edit,
@@ -41,25 +39,11 @@ const eventIcons: Record<string, React.ElementType> = {
   default: User,
 };
 
-// ─── Skeleton loader ─────────────────────────────────────────
-function ActivitySkeleton() {
-  return (
-    <Card className="p-6 space-y-3">
-      <Skeleton className="h-10 w-56" />
-      <Skeleton className="h-20 w-full" />
-      <Skeleton className="h-20 w-full" />
-      <Skeleton className="h-20 w-full" />
-    </Card>
-  );
-}
-
 export function ActivityPage() {
   const [filter, setFilter] = useState<ActivityFilter>('all');
   const [page, setPage] = useState(1);
   const pageSize = 20;
 
-  // ── Query ──────────────────────────────────────────────────
-  // Fetch all activity (filtering is done client‑side)
   const {
     data,
     isLoading,
@@ -75,7 +59,6 @@ export function ActivityPage() {
     refetchInterval: 30000,
   });
 
-  // ── Client‑side filtering ────────────────────────────────
   const allActivities = data?.items ?? [];
   const filteredActivities = useMemo(() => {
     if (filter === 'all') return allActivities;
@@ -85,8 +68,22 @@ export function ActivityPage() {
   const total = data?.total ?? 0;
   const hasNext = allActivities.length === pageSize && total > page * pageSize;
 
-  // ── Loading / error ───────────────────────────────────────
-  if (isLoading) return <ActivitySkeleton />;
+  if (isLoading) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        <Skeleton variant="title" className="w-56" />
+        <Card>
+          <div className="p-6 space-y-3">
+            <Skeleton variant="rectangular" className="h-12" />
+            <Skeleton variant="rectangular" className="h-12" />
+            <Skeleton variant="rectangular" className="h-12" />
+            <Skeleton variant="rectangular" className="h-12" />
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <ErrorState
@@ -97,15 +94,13 @@ export function ActivityPage() {
     );
   }
 
-  // ── Render ────────────────────────────────────────────────
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Activity"
         description="Recent events across your platform."
       />
 
-      {/* Filter tabs */}
       <div className="flex flex-wrap gap-2">
         {(['all', 'agent', 'task', 'execution', 'system'] as const).map((f) => (
           <Button
@@ -130,13 +125,13 @@ export function ActivityPage() {
             {filteredActivities.map((event) => {
               const Icon = eventIcons[event.type] || eventIcons.default;
               return (
-                <Card key={event.id} className="p-4 flex items-start gap-4 hover:border-base-700 transition-colors">
-                  <div className="p-2 rounded-lg bg-base-800">
-                    <Icon size={18} className="text-electric-400" />
+                <Card key={event.id} className="card-hover p-4 flex items-start gap-4">
+                  <div className="p-2 rounded-lg bg-brand-primary/10">
+                    <Icon size={18} className="text-brand-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white">{event.description}</p>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-base-500">
+                    <p className="text-sm text-text-heading">{event.description}</p>
+                    <div className="mt-1 flex items-center gap-2 text-xs text-text-muted">
                       <span>{event.user_name}</span>
                       <span>•</span>
                       <span>{formatDateTime(event.timestamp)}</span>
@@ -152,9 +147,8 @@ export function ActivityPage() {
             })}
           </div>
 
-          {/* Pagination controls */}
           <div className="flex items-center justify-between pt-4">
-            <span className="text-sm text-base-500">
+            <span className="text-sm text-text-muted">
               Showing {filteredActivities.length} of {total} events
             </span>
             <div className="flex gap-2">

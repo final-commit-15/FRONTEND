@@ -10,7 +10,7 @@ import { AgentCard } from '@/components/agents/AgentCard';
 import { AgentFilters } from '@/components/agents/AgentFilters';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { CardSkeleton } from '@/components/ui/Skeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Button } from '@/components/ui/Button';
 import { AgentStatus, Agent } from '@/types/models';
 
@@ -52,12 +52,12 @@ export function AgentsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Agents</h1>
-          <p className="text-base-400 mt-1">Manage your AI agents and their configurations.</p>
+          <h1 className="font-heading text-3xl font-bold text-text-heading">Agents</h1>
+          <p className="text-text-body mt-1">Manage your AI agents and their configurations.</p>
         </div>
         <Button onClick={() => navigate('/agents/new')} icon={<Plus size={18} />}>
           New Agent
@@ -80,7 +80,7 @@ export function AgentsPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <CardSkeleton key={i} />
+            <Skeleton key={i} variant="card" className="h-64" />
           ))}
         </div>
       ) : error ? (
@@ -93,8 +93,7 @@ export function AgentsPage() {
         <EmptyState
           title="No agents yet"
           description="Create your first agent to start executing AI workflows."
-          actionLabel="Create Agent"
-          onAction={() => navigate('/agents/new')}
+          action={<Button onClick={() => navigate('/agents/new')} icon={<Plus size={18} />}>Create Agent</Button>}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

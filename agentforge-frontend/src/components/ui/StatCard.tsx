@@ -1,45 +1,48 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon?: React.ReactNode;
-  trend?: number;
+  change?: number;
+  icon: React.ReactNode;
+  trendLabel?: string;
   className?: string;
 }
 
-export function StatCard({ title, value, icon, trend, className }: StatCardProps) {
-  const isPositive = trend !== undefined && trend > 0;
+export function StatCard({ title, value, change, icon, trendLabel, className }: StatCardProps) {
+  const isPositive = change && change > 0;
+  const isNegative = change && change < 0;
+
   return (
-    <div className={cn('card p-6 relative overflow-hidden group', className)}>
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-base-400">{title}</p>
-          <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+    <div className={cn('card-hover p-5', className)}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-text-body truncate">{title}</p>
+          <p className="text-2xl font-bold text-text-heading mt-1 truncate">{value}</p>
+          {change !== undefined && (
+            <div className="flex items-center gap-1.5 mt-2">
+              {isPositive ? (
+                <TrendingUp className="w-4 h-4 text-success-600" />
+              ) : isNegative ? (
+                <TrendingDown className="w-4 h-4 text-error-600" />
+              ) : (
+                <Minus className="w-4 h-4 text-text-muted" />
+              )}
+              <span className={cn('text-sm font-medium', isPositive ? 'text-success-600' : isNegative ? 'text-error-600' : 'text-text-muted')}>
+                {isPositive || isNegative ? `${Math.abs(change)}%` : 'No change'}
+              </span>
+              {trendLabel && (
+                <span className="text-sm text-text-muted">{trendLabel}</span>
+              )}
+            </div>
+          )}
         </div>
-        {icon && (
-          <div className="p-2 rounded-lg bg-base-800/50 text-white">
-            {icon}
-          </div>
-        )}
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary">
+          {icon}
+        </div>
       </div>
-      {trend !== undefined && (
-        <div className="mt-4 flex items-center gap-1 text-sm">
-          <span
-            className={cn(
-              'flex items-center gap-1 font-medium',
-              isPositive ? 'text-success-500' : 'text-error-500'
-            )}
-          >
-            {isPositive ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-            {Math.abs(trend)}%
-          </span>
-          <span className="text-base-500">vs last period</span>
-        </div>
-      )}
-      <div className="absolute inset-0 bg-gradient-to-br from-electric-500/0 to-violet-500/0 group-hover:from-electric-500/5 group-hover:to-violet-500/5 transition-all duration-300 pointer-events-none" />
     </div>
   );
 }

@@ -10,7 +10,7 @@ export function TaskCreatePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Create Task"
         description="Define a new task for your agents"

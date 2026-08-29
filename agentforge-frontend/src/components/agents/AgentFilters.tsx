@@ -33,7 +33,7 @@ export function AgentFilters({
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search agents..."
-          icon={<Search size={16} className="text-base-500" />}
+          icon={<Search size={16} className="text-text-muted" />}
         />
       </div>
       <div className="w-40">

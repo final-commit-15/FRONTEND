@@ -2,7 +2,7 @@ import React from 'react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { TASK_STATUSES } from '@/lib/constants';
-import { TaskStatus } from '@/types/models'; // or define locally
+import { TaskStatus } from '@/types/models';
 
 interface TaskFiltersProps {
   search: string;

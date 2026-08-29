@@ -1,9 +1,8 @@
 // src/hooks/usePermission.ts
 
 import { useAuth } from './useAuth';
-import type { UserRole } from '@/types/models'; // now exported from models.ts
+import type { UserRole } from '@/types/models';
 
-// ─── Role-based permission mapping ──────────────────────────
 const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   admin: [
     'agents:create',
@@ -15,6 +14,22 @@ const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'settings:update',
     'permissions:update',
     'tools:update',
+  ],
+  developer: [
+    'agents:create',
+    'agents:update',
+    'tasks:create',
+    'tasks:update',
+    'executions:run',
+    'agents:view',
+    'analytics:view',
+    'tools:view',
+  ],
+  operator: [
+    'executions:run',
+    'agents:view',
+    'tasks:view',
+    'analytics:view',
   ],
   user: [
     'tasks:create',

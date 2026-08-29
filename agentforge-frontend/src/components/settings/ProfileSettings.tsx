@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { User } from '@/types/models';
 import { useToast } from '@/hooks/useToast';
 
@@ -24,7 +24,7 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   const { register, handleSubmit, formState: { errors } } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user.name,
+      name: user.full_name,
       email: user.email,
     },
   });
@@ -35,15 +35,19 @@ export function ProfileSettings({ user }: ProfileSettingsProps) {
   };
 
   return (
-    <Card className="p-6 max-w-2xl">
-      <h2 className="text-lg font-semibold text-white mb-4">Profile</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <Input label="Name" {...register('name')} error={errors.name?.message} />
-        <Input label="Email" {...register('email')} error={errors.email?.message} disabled />
-        <div className="flex justify-end">
-          <Button type="submit">Save Changes</Button>
-        </div>
-      </form>
+    <Card className="max-w-2xl">
+      <CardHeader>
+        <h2 className="font-heading text-lg font-semibold text-text-heading">Profile</h2>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Input label="Name" {...register('name')} error={errors.name?.message} />
+          <Input label="Email" {...register('email')} error={errors.email?.message} disabled />
+          <div className="flex justify-end">
+            <Button type="submit">Save Changes</Button>
+          </div>
+        </form>
+      </CardContent>
     </Card>
   );
 }

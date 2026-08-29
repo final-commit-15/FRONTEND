@@ -5,39 +5,40 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
-  icon?: React.ReactNode;  // <-- add this
+  icon?: React.ReactNode;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, hint, icon, id, ...props }, ref) => {
+    const inputId = id || React.useId();
     return (
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-base-300">
+          <label htmlFor={inputId} className="label">
             {label}
           </label>
         )}
         <div className="relative">
           {icon && (
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-base-500 pointer-events-none">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
               {icon}
             </span>
           )}
           <input
             ref={ref}
-            id={id}
+            id={inputId}
             className={cn(
-              'w-full px-3 py-2 bg-base-800/50 border rounded-lg text-sm text-white placeholder-base-500',
-              'focus:border-electric-500 focus:ring-2 focus:ring-electric-500/30 transition-colors',
-              icon && 'pl-10',  // adjust padding when icon present
-              error ? 'border-error-500' : 'border-base-700',
+              'w-full px-4 py-3 bg-canvas-surface border rounded-xl text-sm text-text-heading placeholder-text-muted',
+              'focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-canvas transition-all duration-200',
+              icon && 'pl-12',
+              error ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20' : 'border-canvas-border',
               className
             )}
             {...props}
           />
         </div>
-        {hint && !error && <p className="text-xs text-base-500">{hint}</p>}
-        {error && <p className="text-xs text-error-500">{error}</p>}
+        {hint && !error && <p className="hint">{hint}</p>}
+        {error && <p className="error-text">{error}</p>}
       </div>
     );
   }
