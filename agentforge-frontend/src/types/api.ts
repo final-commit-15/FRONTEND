@@ -1,11 +1,8 @@
 // src/types/api.ts
-import axios from "axios";
 // Re-export domain models for convenience
 // Explicit import + re-export
 import type { Agent, Execution, Task, User, AgentStatus, TaskStatus, ExecutionStatus } from './models';
 export type { Agent, Execution, Task, User, AgentStatus, TaskStatus, ExecutionStatus };
-
-import { useAuthStore } from "@/store/authStore";
 // ─── Common API infrastructure ───────────────────────────────
 
 export interface ApiError {
@@ -245,31 +242,3 @@ export interface TaskCreatePayload {
 }
 
 export type TaskUpdatePayload = Partial<TaskCreatePayload>;
-
-export const api = axios.create({
-  baseURL:
-    import.meta.env.VITE_API_URL ||
-    "http://localhost:8000/api/v1",
-  withCredentials: true,
-});
-
-api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().accessToken;
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-    }
-
-    return Promise.reject(error);
-  }
-);

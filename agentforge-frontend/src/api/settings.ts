@@ -10,12 +10,12 @@ export type { UserPreferences, SecuritySettings, SystemSettings };
 export const settingsApi = {
   // ─── Full settings ──────────────────────────────────────────
   get: async (): Promise<Settings> => {
-    const { data } = await apiClient.get<Settings>('/settings');
+    const { data } = await apiClient.get<Settings>('/settings/');
     return data;
   },
 
   update: async (payload: Partial<Settings>): Promise<Settings> => {
-    const { data } = await apiClient.put<Settings>('/settings', payload);
+    const { data } = await apiClient.put<Settings>('/settings/', payload);
     return data;
   },
 
