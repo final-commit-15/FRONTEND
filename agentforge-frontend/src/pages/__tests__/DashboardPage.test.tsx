@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render } from "@testing-library/react";
+import { waitFor } from "@testing-library/dom";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { DashboardPage } from "../DashboardPage";
@@ -42,7 +43,7 @@ describe("DashboardPage", () => {
       },
     });
 
-    render(
+    const { getByText } = render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>
           <DashboardPage />
@@ -52,7 +53,7 @@ describe("DashboardPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Good (morning|afternoon|evening),/i)
+        getByText(/Good (morning|afternoon|evening),/i)
       ).toBeInTheDocument();
     });
   });

@@ -5,7 +5,7 @@ import type { ActivityListResponse } from '@/types/api';
 
 export const activityApi = {
   list: async (params?: { limit?: number; page?: number }): Promise<ActivityListResponse> => {
-    const { data } = await apiClient.get<ActivityListResponse>('/activity', { params });
+    const { data } = await apiClient.get<ActivityListResponse>('/activity/', { params });
     return data;
   },
 

@@ -7,7 +7,7 @@ import type { Tool } from '@/types/api';
 export const toolsApi = {
   // List tools with optional filtering (category, status)
   list: async (params?: { category?: string; status?: string }): Promise<Tool[]> => {
-    const { data } = await apiClient.get<Tool[]>('/tools', { params });
+    const { data } = await apiClient.get<Tool[]>('/tools/', { params });
     return data;
   },
 
@@ -19,7 +19,7 @@ export const toolsApi = {
 
   // Create a new tool (payload excludes `id` since it's server-generated)
   create: async (payload: Omit<Tool, 'id'>): Promise<Tool> => {
-    const { data } = await apiClient.post<Tool>('/tools', payload);
+    const { data } = await apiClient.post<Tool>('/tools/', payload);
     return data;
   },
 

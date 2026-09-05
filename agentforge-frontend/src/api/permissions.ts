@@ -7,7 +7,7 @@ import type { Permission } from '@/types/api';
 export const permissionsApi = {
   // List all permissions (optional filter for agent or role)
   list: async (params?: { role?: string; agent_id?: string }): Promise<Permission[]> => {
-    const { data } = await apiClient.get<Permission[]>('/permissions', { params });
+    const { data } = await apiClient.get<Permission[]>('/permissions/', { params });
     return data;
   },
 
@@ -19,7 +19,7 @@ export const permissionsApi = {
 
   // Create a new permission (payload excludes `id`)
   create: async (payload: Omit<Permission, 'id'>): Promise<Permission> => {
-    const { data } = await apiClient.post<Permission>('/permissions', payload);
+    const { data } = await apiClient.post<Permission>('/permissions/', payload);
     return data;
   },
 

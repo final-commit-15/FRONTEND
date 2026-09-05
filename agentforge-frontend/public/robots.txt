@@ -1,0 +1,16 @@
+# AgentForge Robots.txt
+User-agent: *
+Allow: /
+
+# Disallow private/admin routes
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /settings
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://agentforge-ai-page.vercel.app/sitemap.xml
+
+# Host
+Host: https://agentforge-ai-page.vercel.app

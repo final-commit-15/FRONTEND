@@ -1,67 +1,111 @@
 // src/router.tsx
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { AppShell } from '@/components/layout/AppShell';
+import { Skeleton } from '@/components/ui/Skeleton';
 
-// ─── Pages ──────────────────────────────────────────────────
-import { LoginPage } from '@/pages/LoginPage';
-import { RegisterPage } from '@/pages/RegisterPage';
-import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { AgentsPage } from '@/pages/AgentsPage';
-import { AgentDetailPage } from '@/pages/AgentDetailPage';
-import { AgentCreatePage } from '@/pages/AgentCreatePage';
-import { AgentEditPage } from '@/pages/AgentEditPage';
-import { TasksPage } from '@/pages/TasksPage';
-import { TaskDetailPage } from '@/pages/TaskDetailPage';
-import { TaskCreatePage } from '@/pages/TaskCreatePage';
-import { ExecutionsPage } from '@/pages/ExecutionsPage';
-import { ExecutionDetailPage } from '@/pages/ExecutionDetailPage';
-import { AnalyticsPage } from '@/pages/AnalyticsPage';
-import { ActivityPage } from '@/pages/ActivityPage';
-import { ToolsPage } from '@/pages/ToolsPage';
-import { PermissionsPage } from '@/pages/PermissionsPage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import { NotFoundPage } from '@/pages/NotFoundPage';
-import { IntegrationsPage } from "@/pages/IntegrationsPage";
-import { ErrorBoundaryPage } from '@/pages/ErrorBoundaryPage';
+// ─── Lazy-loaded Pages ──────────────────────────────────────────────────
+const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default: m.LoginPage })));
+const RegisterPage = lazy(() => import('@/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
+const AgentsPage = lazy(() => import('@/pages/AgentsPage').then((m) => ({ default: m.AgentsPage })));
+const AgentDetailPage = lazy(() => import('@/pages/AgentDetailPage').then((m) => ({ default: m.AgentDetailPage })));
+const AgentCreatePage = lazy(() => import('@/pages/AgentCreatePage').then((m) => ({ default: m.AgentCreatePage })));
+const AgentEditPage = lazy(() => import('@/pages/AgentEditPage').then((m) => ({ default: m.AgentEditPage })));
+const TasksPage = lazy(() => import('@/pages/TasksPage').then((m) => ({ default: m.TasksPage })));
+const TaskDetailPage = lazy(() => import('@/pages/TaskDetailPage').then((m) => ({ default: m.TaskDetailPage })));
+const TaskCreatePage = lazy(() => import('@/pages/TaskCreatePage').then((m) => ({ default: m.TaskCreatePage })));
+const ExecutionsPage = lazy(() => import('@/pages/ExecutionsPage').then((m) => ({ default: m.ExecutionsPage })));
+const ExecutionDetailPage = lazy(() => import('@/pages/ExecutionDetailPage').then((m) => ({ default: m.ExecutionDetailPage })));
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
+const ActivityPage = lazy(() => import('@/pages/ActivityPage').then((m) => ({ default: m.ActivityPage })));
+const ToolsPage = lazy(() => import('@/pages/ToolsPage').then((m) => ({ default: m.ToolsPage })));
+const PermissionsPage = lazy(() => import('@/pages/PermissionsPage').then((m) => ({ default: m.PermissionsPage })));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
+const IntegrationsPage = lazy(() => import('@/pages/IntegrationsPage').then((m) => ({ default: m.IntegrationsPage })));
+const ErrorBoundaryPage = lazy(() => import('@/pages/ErrorBoundaryPage').then((m) => ({ default: m.ErrorBoundaryPage })));
 
-// ─── Protected Route Wrapper ──────────────────────────────
+// ─── Loading Fallback ───────────────────────────────────────────────────
+function PageLoadingFallback() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-base-950 text-white">
+      <div className="space-y-4 text-center">
+        <Skeleton variant="circular" className="w-12 h-12 mx-auto" />
+        <Skeleton variant="text" className="w-48 mx-auto" />
+      </div>
+    </div>
+  );
+}
+
+function ProtectedRouteLoadingFallback() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-base-950 text-white">
+      <div className="space-y-4 text-center">
+        <Skeleton variant="circular" className="w-12 h-12 mx-auto" />
+        <Skeleton variant="text" className="w-64 mx-auto" />
+      </div>
+    </div>
+  );
+}
+
+// ─── Protected Route Wrapper ────────────────────────────────────────────
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-base-950 text-white">
-        Loading AgentForge...
-      </div>
-    );
+    return <ProtectedRouteLoadingFallback />;
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // IMPORTANT: AppShell already contains <Outlet />
-  return <AppShell />;
+  return (
+    <Suspense fallback={<PageLoadingFallback />}>
+      <AppShell />
+    </Suspense>
+  );
 }
 
-// ─── Router ─────────────────────────────────────────────────
+// ─── Public Route Wrapper with Suspense ─────────────────────────────────
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<PageLoadingFallback />}>
+      {children}
+    </Suspense>
+  );
+}
+
+// ─── Router ─────────────────────────────────────────────────────────────
 export const router = createBrowserRouter([
   // ---------------- Public ----------------
-  { path: "/", element: <Navigate to="/login" replace /> },
+  {
+    path: "/",
+    element: <Navigate to="/login" replace />,
+  },
 
-  { path: "/login", element: <LoginPage /> },
-  { path: "/register", element: <RegisterPage /> },
-  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+  {
+    path: "/login",
+    element: <PublicRoute><LoginPage /></PublicRoute>,
+  },
+  {
+    path: "/register",
+    element: <PublicRoute><RegisterPage /></PublicRoute>,
+  },
+  {
+    path: "/forgot-password",
+    element: <PublicRoute><ForgotPasswordPage /></PublicRoute>,
+  },
 
   // ---------------- Protected Layout ----------------
   {
     path: "/",
     element: <ProtectedRoute />,
-    errorElement: <ErrorBoundaryPage />,
+    errorElement: <Suspense fallback={<PageLoadingFallback />}><ErrorBoundaryPage /></Suspense>,
     children: [
       { path: "dashboard", element: <DashboardPage /> },
       { path: "agents", element: <AgentsPage /> },
@@ -85,5 +129,5 @@ export const router = createBrowserRouter([
     ],
   },
 
-  { path: "*", element: <NotFoundPage /> },
+  { path: "*", element: <Suspense fallback={<PageLoadingFallback />}><NotFoundPage /></Suspense> },
 ]);

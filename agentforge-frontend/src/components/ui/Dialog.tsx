@@ -13,8 +13,6 @@ interface DialogProps {
 }
 
 export function Dialog({ open, onOpenChange, children, className, title, description }: DialogProps) {
-  if (!open) return null;
-
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onOpenChange(false);
   };
@@ -24,13 +22,16 @@ export function Dialog({ open, onOpenChange, children, className, title, descrip
   };
 
   React.useEffect(() => {
+    if (!open) return;
     document.addEventListener('keydown', handleEscape);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = '';
     };
-  }, []);
+  }, [open]);
+
+  if (!open) return null;
 
   const content = (
     <div className="modal-backdrop" onClick={handleOverlayClick}>

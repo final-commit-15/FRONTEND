@@ -15,7 +15,7 @@ export type { AgentCreatePayload, AgentUpdatePayload };
 
 export const agentsApi = {
   list: async (params: AgentListParams = {}): Promise<AgentListResponse> => {
-    const { data } = await apiClient.get<AgentListResponse>('/agents', { params });
+    const { data } = await apiClient.get<AgentListResponse>('/agents/', { params });
     return data;
   },
 
@@ -25,7 +25,7 @@ export const agentsApi = {
   },
 
   create: async (payload: AgentCreatePayload): Promise<Agent> => {
-    const { data } = await apiClient.post<Agent>('/agents', payload);
+    const { data } = await apiClient.post<Agent>('/agents/', payload);
     return data;
   },
 
