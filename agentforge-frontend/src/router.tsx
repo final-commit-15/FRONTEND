@@ -33,58 +33,57 @@ function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    // You can replace this with a proper loading spinner
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-base-950 text-white">
+        Loading AgentForge...
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // Workaround: AppShell does not currently accept children in its type definition.
-  // We cast to any to bypass the type error until the component is fixed.
-  // TODO: Update AppShell to include `children: React.ReactNode` in its props.
-  const AppShellAny = AppShell as any;
-
-  return (
-    <AppShellAny>
-      <Outlet />
-    </AppShellAny>
-  );
+  // IMPORTANT: AppShell already contains <Outlet />
+  return <AppShell />;
 }
 
 // ─── Router ─────────────────────────────────────────────────
 export const router = createBrowserRouter([
-  // Public routes
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  // ---------------- Public ----------------
+  { path: "/", element: <Navigate to="/login" replace /> },
 
-  // Protected routes
+  { path: "/login", element: <LoginPage /> },
+  { path: "/register", element: <RegisterPage /> },
+  { path: "/forgot-password", element: <ForgotPasswordPage /> },
+
+  // ---------------- Protected Layout ----------------
   {
+    path: "/",
     element: <ProtectedRoute />,
     errorElement: <ErrorBoundaryPage />,
     children: [
-      { path: '/', element: <Navigate to="/dashboard" replace /> },
-      { path: '/dashboard', element: <DashboardPage /> },
-      { path: '/agents', element: <AgentsPage /> },
-      { path: '/agents/new', element: <AgentCreatePage /> },
-      { path: '/agents/:id', element: <AgentDetailPage /> },
-      { path: '/agents/:id/edit', element: <AgentEditPage /> },
-      { path: '/tasks', element: <TasksPage /> },
-      { path: '/tasks/new', element: <TaskCreatePage /> },
-      { path: '/tasks/:id', element: <TaskDetailPage /> },
-      { path: '/executions', element: <ExecutionsPage /> },
-      { path: '/executions/:id', element: <ExecutionDetailPage /> },
-      { path: '/analytics', element: <AnalyticsPage /> },
-      { path: '/activity', element: <ActivityPage /> },
-      { path: '/tools', element: <ToolsPage /> },
-      { path: '/permissions', element: <PermissionsPage /> },
-      { path: '/settings', element: <SettingsPage /> },
-      { path: '/integrations', element: <IntegrationsPage /> },
+      { path: "dashboard", element: <DashboardPage /> },
+      { path: "agents", element: <AgentsPage /> },
+      { path: "agents/new", element: <AgentCreatePage /> },
+      { path: "agents/:id", element: <AgentDetailPage /> },
+      { path: "agents/:id/edit", element: <AgentEditPage /> },
+
+      { path: "tasks", element: <TasksPage /> },
+      { path: "tasks/new", element: <TaskCreatePage /> },
+      { path: "tasks/:id", element: <TaskDetailPage /> },
+
+      { path: "executions", element: <ExecutionsPage /> },
+      { path: "executions/:id", element: <ExecutionDetailPage /> },
+
+      { path: "analytics", element: <AnalyticsPage /> },
+      { path: "activity", element: <ActivityPage /> },
+      { path: "tools", element: <ToolsPage /> },
+      { path: "permissions", element: <PermissionsPage /> },
+      { path: "settings", element: <SettingsPage /> },
+      { path: "integrations", element: <IntegrationsPage /> },
     ],
   },
 
-  // Fallback 404 (public, for any unmatched route)
-  { path: '*', element: <NotFoundPage /> },
+  { path: "*", element: <NotFoundPage /> },
 ]);

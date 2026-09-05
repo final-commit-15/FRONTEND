@@ -1,5 +1,3 @@
-// src/pages/AnalyticsPage.tsx
-
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { analyticsApi } from '@/api/analytics';
@@ -27,16 +25,13 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 
 type TimeRange = '24h' | '7d' | '30d' | '90d';
 
-const COLORS = ['#10b981', '#ef4444', '#f59e0b'];
-
-// ─── Helper: ensure array from various API shapes ──────────
 function ensureArray<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data;
   if (data && typeof data === 'object') {
-    // Try common keys
     const obj = data as Record<string, unknown>;
     if (Array.isArray(obj.data)) return obj.data as T[];
     if (Array.isArray(obj.items)) return obj.items as T[];
@@ -46,17 +41,27 @@ function ensureArray<T>(data: unknown): T[] {
 }
 
 const tooltipStyle = {
-  backgroundColor: '#0f172a',
-  border: '1px solid #1e293b',
-  borderRadius: '0.5rem',
-  color: '#f1f5f9',
+  backgroundColor: '#FFFFFF',
+  border: '1px solid rgba(255,255,255,0.70)',
+  borderRadius: '0.75rem',
+  color: '#171717',
   fontSize: '0.875rem',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
 };
+
+const executionFormatter = (value: unknown): [string, string] => [
+  typeof value === 'number' ? value.toLocaleString() : '0',
+  'Executions',
+];
+
+const durationFormatter = (value: unknown): [string, string] => [
+  typeof value === 'number' ? value.toFixed(0) + 'ms' : '0ms',
+  'Duration',
+];
 
 export function AnalyticsPage() {
   const [range, setRange] = useState<TimeRange>('7d');
 
-  // ── Queries ──────────────────────────────────────────────────
   const executionQuery = useQuery<ExecutionActivityPoint[]>({
     queryKey: ['analytics-executions', range],
     queryFn: () => analyticsApi.getExecutionActivity(range),
@@ -77,7 +82,6 @@ export function AnalyticsPage() {
     queryFn: () => analyticsApi.getAgentPerformanceComparison(range),
   });
 
-  // ── Combined loading / error ───────────────────────────────
   const isLoading =
     executionQuery.isLoading ||
     agentUsageQuery.isLoading ||
@@ -92,13 +96,13 @@ export function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-56" />
+      <div className="space-y-6 animate-fade-in">
+        <Skeleton variant="title" className="w-56" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-80 w-full" />
-          <Skeleton className="h-80 w-full" />
-          <Skeleton className="h-80 w-full" />
-          <Skeleton className="h-80 w-full" />
+          <Skeleton variant="card" className="h-80" />
+          <Skeleton variant="card" className="h-80" />
+          <Skeleton variant="card" className="h-80" />
+          <Skeleton variant="card" className="h-80" />
         </div>
       </div>
     );
@@ -119,14 +123,13 @@ export function AnalyticsPage() {
     );
   }
 
-  // ── Safe data ───────────────────────────────────────────────
   const executionData = ensureArray<ExecutionActivityPoint>(executionQuery.data);
   const agentUsage = ensureArray<AgentUsagePoint>(agentUsageQuery.data);
   const taskData = ensureArray<TaskActivityPoint>(tasksQuery.data);
   const performanceData = ensureArray<AgentUsagePoint>(performanceQuery.data);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Analytics"
         description="Deep insights into your AI operations."
@@ -134,63 +137,79 @@ export function AnalyticsPage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Executions Over Time */}
-        <ChartCard title="Executions Over Time" isLoading={false}>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={executionData}>
-              <defs>
-                <linearGradient id="execAnalytics" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="timestamp" stroke="#475569" fontSize={12} />
-              <YAxis stroke="#475569" fontSize={12} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Area type="monotone" dataKey="count" stroke="#3b82f6" fill="url(#execAnalytics)" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        <Card className="h-full">
+          <CardHeader className="pb-4">
+            <h3 className="font-heading text-lg font-semibold text-text-heading">Executions Over Time</h3>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ResponsiveContainer width="100%" height={300}>
+              <AreaChart data={executionData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
+                <defs>
+                  <linearGradient id="execAnalytics" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0084FF" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#0084FF" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" stroke="#E5E7EB" vertical={false} />
+                <XAxis dataKey="timestamp" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} width={40} />
+                <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: '#6B7280' }} formatter={executionFormatter as any} />
+                <Area type="monotone" dataKey="count" stroke="#0084FF" strokeWidth={2} fill="url(#execAnalytics)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        {/* Agent Usage */}
-        <ChartCard title="Agent Usage" isLoading={false}>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={agentUsage}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="agent_name" stroke="#475569" fontSize={12} />
-              <YAxis stroke="#475569" fontSize={12} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="executions" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        <Card className="h-full">
+          <CardHeader className="pb-4">
+            <h3 className="font-heading text-lg font-semibold text-text-heading">Agent Usage</h3>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={agentUsage} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="#E5E7EB" vertical={false} />
+                <XAxis dataKey="agent_name" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} width={40} />
+                <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: '#6B7280' }} />
+                <Bar dataKey="executions" fill="#0084FF" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        {/* Tasks Over Time */}
-        <ChartCard title="Tasks Over Time" isLoading={false}>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={taskData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="date" stroke="#475569" fontSize={12} />
-              <YAxis stroke="#475569" fontSize={12} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Line type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        <Card className="h-full">
+          <CardHeader className="pb-4">
+            <h3 className="font-heading text-lg font-semibold text-text-heading">Tasks Over Time</h3>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={taskData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="#E5E7EB" vertical={false} />
+                <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} width={40} />
+                <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: '#6B7280' }} />
+                <Line type="monotone" dataKey="count" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 4, fill: '#8B5CF6', strokeWidth: 2, stroke: '#FFFFFF' }} activeDot={{ r: 6, fill: '#8B5CF6', strokeWidth: 2, stroke: '#FFFFFF' }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-        {/* Average Duration */}
-        <ChartCard title="Average Execution Duration" isLoading={false}>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={performanceData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
-              <XAxis dataKey="agent_name" stroke="#475569" fontSize={12} />
-              <YAxis stroke="#475569" fontSize={12} />
-              <Tooltip contentStyle={tooltipStyle} />
-              <Bar dataKey="avg_duration" fill="#10b981" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
+        <Card className="h-full">
+          <CardHeader className="pb-4">
+            <h3 className="font-heading text-lg font-semibold text-text-heading">Average Execution Duration</h3>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={performanceData} margin={{ top: 5, right: 5, bottom: 5, left: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="#E5E7EB" vertical={false} />
+                <XAxis dataKey="agent_name" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} width={40} />
+                <Tooltip contentStyle={tooltipStyle} labelStyle={{ color: '#6B7280' }} formatter={durationFormatter as any} />
+                <Bar dataKey="avg_duration" fill="#10B981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

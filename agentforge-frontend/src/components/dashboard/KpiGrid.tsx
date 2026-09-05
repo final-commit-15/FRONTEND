@@ -6,6 +6,7 @@ import { StatCard } from '../../components/ui/StatCard';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { analyticsApi } from '../../api/analytics';
 import { formatNumber, formatPercent } from '../../lib/format';
+import { Skeleton } from '../../components/ui/Skeleton';
 
 export function KpiGrid() {
   const { data, isLoading, error, refetch } = useQuery({
@@ -18,14 +19,13 @@ export function KpiGrid() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="card p-6 h-32 animate-pulse bg-base-800/50" />
+          <Skeleton key={i} variant="card" className="h-32" />
         ))}
       </div>
     );
   }
 
   if (error) {
-    // 👇 Assuming ErrorState accepts `title` and `description` (common pattern)
     return (
       <ErrorState
         title="Failed to load KPIs"
@@ -35,7 +35,6 @@ export function KpiGrid() {
     );
   }
 
-  // Guard against undefined data
   const safeData = data ?? {
     total_agents: 0,
     active_agents: 0,
@@ -52,26 +51,29 @@ export function KpiGrid() {
       title: 'Total Agents',
       value: formatNumber(safeData.total_agents),
       change: safeData.agents_change,
-      // 👇 Render icon as element with color class
-      icon: <Bot className="text-electric-400" size={20} />,
+      icon: <Bot className="text-brand-primary" size={20} />,
+      trendLabel: 'vs last month',
     },
     {
       title: 'Active Agents',
       value: formatNumber(safeData.active_agents),
       change: safeData.active_agents_change,
-      icon: <Activity className="text-violet-400" size={20} />,
+      icon: <Activity className="text-violet-500" size={20} />,
+      trendLabel: 'vs last month',
     },
     {
       title: 'Executions',
       value: formatNumber(safeData.total_executions),
       change: safeData.executions_change,
       icon: <TerminalSquare className="text-info-500" size={20} />,
+      trendLabel: 'vs last month',
     },
     {
       title: 'Success Rate',
       value: formatPercent(safeData.success_rate),
       change: safeData.success_rate_change,
-      icon: <CheckCircle2 className="text-success-500" size={20} />,
+      icon: <CheckCircle2 className="text-success-600" size={20} />,
+      trendLabel: 'vs last month',
     },
   ];
 

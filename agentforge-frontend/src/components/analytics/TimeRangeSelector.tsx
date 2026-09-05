@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 
 interface TimeRangeSelectorProps {
   value?: '24h' | '7d' | '30d' | '90d';
@@ -10,19 +11,14 @@ const ranges = ['24h', '7d', '30d', '90d'] as const;
 
 export function TimeRangeSelector({ value = '7d', onChange }: TimeRangeSelectorProps) {
   return (
-    <div className="flex gap-1">
-      {ranges.map((range) => (
-        <button
-          key={range}
-          onClick={() => onChange?.(range)}
-          className={cn(
-            'px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
-            value === range ? 'bg-electric-600 text-white' : 'text-base-400 hover:text-white hover:bg-base-800'
-          )}
-        >
-          {range}
-        </button>
-      ))}
-    </div>
+    <Tabs defaultValue={value} onValueChange={onChange as (value: string) => void}>
+      <TabsList className="bg-canvas-surface border-canvas-border p-1">
+        {ranges.map((range) => (
+          <TabsTrigger key={range} value={range} className="px-3 py-1.5 text-xs font-medium">
+            {range}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }

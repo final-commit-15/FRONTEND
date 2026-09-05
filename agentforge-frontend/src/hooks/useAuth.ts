@@ -1,70 +1,69 @@
-// src/hooks/useAuth.ts
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { authApi } from '../api/auth';
-import { useAuthStore } from '../store/authStore';
+import { useEffect } from 'react';
+import { authApi } from '@/api/auth';
+import { useAuthStore } from '@/store/authStore';
 import type { User } from '@/types/models';
+import type { AuthTokens } from '@/types/api';
 
-export interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-}
-
-export function useAuth(): AuthState & {
-  login: ReturnType<typeof useMutation<unknown, Error, Parameters<typeof authApi.login>[0]>>;
-  register: ReturnType<typeof useMutation<unknown, Error, Parameters<typeof authApi.register>[0]>>;
-  logout: () => Promise<void>;
-} {
+export function useAuth() {
   const queryClient = useQueryClient();
-  const { setAuth, logout: storeLogout } = useAuthStore();
+  const {
+    accessToken,
+    setTokens,
+    setUser,
+    logout,
+  } = useAuthStore();
 
   // ── Query: fetch current user ──────────────────────────────
-  const { data: user, isLoading } = useQuery<User | null>({
+  const meQuery = useQuery<User>({
     queryKey: ['auth', 'me'],
     queryFn: authApi.me,
+    enabled: !!accessToken,
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 300000,
+    gcTime: 600000,
   });
 
-  // ── Mutations ──────────────────────────────────────────────
+  // Side effects for query success/error
+  useEffect(() => {
+    if (meQuery.data) {
+      setUser(meQuery.data);
+    }
+  }, [meQuery.data, setUser]);
+
+  useEffect(() => {
+    if (meQuery.error) {
+      logout();
+    }
+  }, [meQuery.error, logout]);
+
+  // ── Login mutation ──────────────────────────────────────────
   const login = useMutation({
     mutationFn: authApi.login,
-    onSuccess: (data) => {
-      // Ensure tokens are strings (provide fallback empty string if undefined)
-      setAuth(
-        data.user,
-        data.access_token ?? '',
-        data.refresh_token ?? ''
-      );
-      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    async onSuccess(tokens: AuthTokens) {
+      setTokens(tokens);
+      const user = await authApi.me();
+      setUser(user);
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });
 
+  // ── Register mutation ──────────────────────────────────────
   const register = useMutation({
     mutationFn: authApi.register,
-    onSuccess: (data) => {
-      setAuth(
-        data.user,
-        data.access_token ?? '',
-        data.refresh_token ?? ''
-      );
-      queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    async onSuccess(tokens: AuthTokens) {
+      setTokens(tokens);
+      const user = await authApi.me();
+      setUser(user);
+      await queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });
 
-  // ── Logout (syncs store and query cache) ──────────────────
-  const logout = async () => {
-    await authApi.logout();
-    storeLogout(); // clear zustand state
-    queryClient.clear(); // reset all queries
-    window.location.href = '/login';
-  };
 
   return {
-    user: user ?? null,
-    isAuthenticated: !!user,
-    isLoading,
+    user: meQuery.data ?? null,
+    isAuthenticated: !!accessToken,
+    isLoading: !!accessToken && meQuery.isLoading,
     login,
     register,
     logout,

@@ -1,5 +1,3 @@
-// src/components/dashboard/AgentPerformance.tsx
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -7,9 +5,9 @@ import { Bot } from 'lucide-react';
 
 import { analyticsApi } from '../../api/analytics';
 import type { AgentUsagePoint } from '../../types/api';
-import { Table, TableColumn } from '../../components/ui/Table'; // ✅ use generic Table
+import { Table, TableColumn } from '../../components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
-import { Card } from '../../components/ui/Card';
+import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { formatPercent, formatDuration } from '../../lib/format';
@@ -27,11 +25,13 @@ export function AgentPerformance() {
 
   if (isLoading) {
     return (
-      <Card className="p-6">
-        <Skeleton className="h-8 w-full mb-4" />
-        <Skeleton className="h-10 w-full mb-2" />
-        <Skeleton className="h-10 w-full mb-2" />
-        <Skeleton className="h-10 w-full" />
+      <Card className="h-full">
+        <CardHeader className="pb-4">
+          <h3 className="font-heading text-lg font-semibold text-text-heading">Agent Performance</h3>
+        </CardHeader>
+        <CardContent className="pt-0">
+          <Skeleton variant="card" className="h-60" />
+        </CardContent>
       </Card>
     );
   }
@@ -48,7 +48,6 @@ export function AgentPerformance() {
 
   const agents = data ?? [];
 
-  // ─── Table columns ──────────────────────────────────────────
   const columns: TableColumn<AgentUsagePoint>[] = [
     {
       key: 'agent_id',
@@ -58,11 +57,11 @@ export function AgentPerformance() {
           to={`/agents/${row.agent_id}`}
           className="flex items-center gap-3 hover:underline"
         >
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-electric-500/20 to-violet-500/20 flex items-center justify-center">
-            <Bot size={16} className="text-electric-400" />
+          <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center">
+            <Bot size={16} className="text-brand-primary" />
           </div>
           <div>
-            <p className="font-medium text-white">{row.agent_name}</p>
+            <p className="font-medium text-text-heading">{row.agent_name}</p>
           </div>
         </Link>
       ),
@@ -76,25 +75,30 @@ export function AgentPerformance() {
       label: 'Success Rate',
       render: (value, row) => {
         const rate = row.success_rate;
-        const color = rate > 90 ? 'text-success-500' : rate > 70 ? 'text-warning-500' : 'text-error-500';
-        return <span className={color}>{formatPercent(rate)}</span>;
+        if (rate > 90) return <Badge variant="success">{formatPercent(rate)}</Badge>;
+        if (rate > 70) return <Badge variant="warning">{formatPercent(rate)}</Badge>;
+        return <Badge variant="error">{formatPercent(rate)}</Badge>;
       },
     },
     {
       key: 'avg_duration',
       label: 'Avg Duration',
-      render: (value) => <span>{formatDuration(value as number)}</span>,
+      render: (value) => <span className="font-mono text-text-body">{formatDuration(value as number)}</span>,
     },
   ];
 
   return (
-    <div className="card overflow-hidden">
-      <div className="px-6 py-4 border-b border-base-800">
-        <h3 className="text-lg font-semibold text-white">Agent Performance</h3>
-      </div>
-      <div className="overflow-x-auto">
-        <Table columns={columns} data={agents} />
-      </div>
-    </div>
+    <Card className="h-full overflow-hidden">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading text-lg font-semibold text-text-heading">Agent Performance</h3>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="overflow-x-auto">
+          <Table columns={columns} data={agents} striped hoverable />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -24,35 +24,70 @@ apiClient.interceptors.request.use(
 );
 
 // Response interceptor for token refresh & error handling
+let isRefreshing = false;
+let refreshPromise: Promise<any> | null = null;
+
 apiClient.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-    
-    if (error.response?.status === 401 && !originalRequest._retry) {
+
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (!originalRequest.headers) {
+      originalRequest.headers = {};
+    }
+
+    if (
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/register") ||
+      originalRequest.url?.includes("/auth/refresh")
+    ) {
+      return Promise.reject(error);
+    }
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
-      try {
-        const refreshToken = useAuthStore.getState().refreshToken;
-        if (!refreshToken) throw new Error('No refresh token');
-        
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-          refresh_token: refreshToken,
-        });
-        
-        const { access_token } = response.data;
-        useAuthStore.getState().setAccessToken(access_token);
-        originalRequest.headers = {
-          ...originalRequest.headers,
-          Authorization: `Bearer ${access_token}`,
-        };
-        return apiClient(originalRequest);
-      } catch (refreshError) {
+
+      const refreshToken = useAuthStore.getState().refreshToken;
+
+      if (!refreshToken) {
         useAuthStore.getState().logout();
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+        return Promise.reject(error);
+      }
+
+      try {
+        if (!isRefreshing) {
+          isRefreshing = true;
+
+          refreshPromise = apiClient.post("/auth/refresh", {
+            refresh_token: refreshToken,
+          });
+        }
+
+        const { data } = await refreshPromise;
+
+        isRefreshing = false;
+        refreshPromise = null;
+
+        useAuthStore.getState().setTokens(data);
+
+        originalRequest.headers.Authorization =
+          `Bearer ${data.access_token}`;
+
+        return apiClient(originalRequest);
+
+      } catch (err) {
+        isRefreshing = false;
+        refreshPromise = null;
+
+        useAuthStore.getState().logout();
+        return Promise.reject(err);
       }
     }
-    
+
     return Promise.reject(error);
   }
 );

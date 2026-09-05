@@ -3,19 +3,19 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui/Card';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import {
-  GitBranch,          // ✅ correct casing           // ✅ exists
-  MessageSquare,         // ✅ exists
+  GitBranch,
+  MessagesSquare,
   HardDrive,
   NotepadText,
   Briefcase,
   Mail,
   Building2,
-  Webhook as WebhookIcon,   // ✅ renamed to avoid conflict
+  Webhook as WebhookIcon,
   RefreshCw,
   CheckCircle2,
   XCircle,
@@ -25,14 +25,15 @@ import {
   Zap,
   ExternalLink,
   Loader2,
-  GitBranchIcon,
-  MessagesSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { apiClient } from '@/api/client'; // ✅ use the shared API client
+import { apiClient } from '@/api/client';
 import { useToast } from '@/hooks/useToast';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { formatRelativeTime } from '@/lib/format';
 
-// ─── Types ──────────────────────────────────────────────────
 interface IntegrationProvider {
   id: string;
   name: string;
@@ -53,23 +54,16 @@ interface Webhook {
   last_triggered?: string | null;
 }
 
-// ─── API Client ─────────────────────────────────────────────
-// Replace these with actual backend endpoints
-// ─── API Client ─────────────────────────────────────────────
-// Replace these with your actual backend endpoints and response shapes.
 const integrationsApi = {
   list: () =>
     apiClient.get('/integrations').then((res) => {
       const data = res.data;
-      // If it's already an array, return it.
       if (Array.isArray(data)) return data;
-      // If it's an object, try common wrapper keys.
       if (data && typeof data === 'object') {
         if (Array.isArray(data.items)) return data.items;
         if (Array.isArray(data.data)) return data.data;
         if (Array.isArray(data.results)) return data.results;
       }
-      // Fallback: empty array.
       return [];
     }),
 
@@ -103,7 +97,6 @@ const integrationsApi = {
     apiClient.post(`/webhooks/${id}/test`).then((res) => res.data),
 };
 
-// ─── Simple Toggle ──────────────────────────────────────────
 function Toggle({ checked, onCheckedChange }: { checked: boolean; onCheckedChange: (checked: boolean) => void }) {
   return (
     <button
@@ -113,7 +106,7 @@ function Toggle({ checked, onCheckedChange }: { checked: boolean; onCheckedChang
       onClick={() => onCheckedChange(!checked)}
       className={cn(
         'relative inline-flex h-5 w-10 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
-        checked ? 'bg-electric-600' : 'bg-base-700'
+        checked ? 'bg-brand-primary' : 'bg-canvas-border'
       )}
     >
       <span
@@ -126,7 +119,6 @@ function Toggle({ checked, onCheckedChange }: { checked: boolean; onCheckedChang
   );
 }
 
-// ─── Helpers ──────────────────────────────────────────────────
 function getStatusBadge(status: IntegrationProvider['status'] | Webhook['status']) {
   switch (status) {
     case 'connected':
@@ -142,23 +134,10 @@ function getStatusBadge(status: IntegrationProvider['status'] | Webhook['status'
   }
 }
 
-function formatRelativeTime(timestamp?: string | null) {
-  if (!timestamp) return 'Never';
-  const diff = Date.now() - new Date(timestamp).getTime();
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return 'Just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-// ─── Icon mapping ───────────────────────────────────────────
 const iconMap: Record<string, React.ElementType> = {
   github: GitBranch,
   slack: MessagesSquare,
-  discord: MessageSquare,
+  discord: MessagesSquare,
   googledrive: HardDrive,
   notion: NotepadText,
   jira: Briefcase,
@@ -167,7 +146,6 @@ const iconMap: Record<string, React.ElementType> = {
   webhook: WebhookIcon,
 };
 
-// ─── Provider Card ───────────────────────────────────────────
 interface ProviderCardProps {
   provider: IntegrationProvider;
   onToggle: (id: string, enabled: boolean) => void;
@@ -180,40 +158,40 @@ function ProviderCard({ provider, onToggle, onConnect, onDisconnect, isPending }
   const Icon = iconMap[provider.id] || WebhookIcon;
 
   return (
-    <Card className="p-5 flex flex-col gap-3 hover:border-base-700 transition-colors">
+    <Card className="card-hover p-5 flex flex-col gap-3">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-base-800">
-            <Icon size={20} className="text-electric-400" />
+          <div className="p-2 rounded-lg bg-brand-primary/10">
+            <Icon size={20} className="text-brand-primary" />
           </div>
           <div>
-            <h4 className="font-semibold text-white">{provider.name}</h4>
-            <p className="text-xs text-base-500">{provider.description}</p>
+            <h4 className="font-semibold text-text-heading">{provider.name}</h4>
+            <p className="text-xs text-text-muted">{provider.description}</p>
           </div>
         </div>
         {getStatusBadge(provider.status)}
       </div>
 
       {provider.account && (
-        <div className="flex items-center gap-2 text-sm text-base-400">
+        <div className="flex items-center gap-2 text-sm text-text-muted">
           <span>Account:</span>
-          <span className="text-white font-mono text-xs">{provider.account}</span>
+          <span className="text-text-heading font-mono text-xs">{provider.account}</span>
         </div>
       )}
 
       {provider.last_synced && (
-        <div className="flex items-center gap-2 text-xs text-base-500">
+        <div className="flex items-center gap-2 text-xs text-text-muted">
           <Clock size={14} />
           <span>Last synced: {formatRelativeTime(provider.last_synced)}</span>
         </div>
       )}
 
-      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-base-800">
+      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-canvas-border">
         <Toggle
           checked={provider.enabled}
           onCheckedChange={(checked) => onToggle(provider.id, checked)}
         />
-        <span className="text-xs text-base-500">
+        <span className="text-xs text-text-muted">
           {provider.enabled ? 'Enabled' : 'Disabled'}
         </span>
         <div className="ml-auto flex gap-2">
@@ -242,7 +220,6 @@ function ProviderCard({ provider, onToggle, onConnect, onDisconnect, isPending }
   );
 }
 
-// ─── Webhook Section ─────────────────────────────────────────
 interface WebhookSectionProps {
   webhooks: Webhook[];
   isLoading: boolean;
@@ -258,12 +235,12 @@ function WebhookSection({ webhooks, isLoading, onAdd, onDelete, onTest, isPendin
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">Webhooks</h3>
-            <p className="text-sm text-base-500">Loading webhooks...</p>
+            <h3 className="font-heading text-lg font-semibold text-text-heading">Webhooks</h3>
+            <p className="text-sm text-text-muted">Loading webhooks...</p>
           </div>
         </div>
-        <Card className="p-8 text-center border-dashed">
-          <Loader2 className="animate-spin mx-auto text-base-500" size={24} />
+        <Card className="p-8 text-center border-dashed border-canvas-border">
+          <Loader2 className="animate-spin mx-auto text-text-muted" size={24} />
         </Card>
       </div>
     );
@@ -273,8 +250,8 @@ function WebhookSection({ webhooks, isLoading, onAdd, onDelete, onTest, isPendin
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Webhooks</h3>
-          <p className="text-sm text-base-500">Manage incoming and outgoing webhook endpoints.</p>
+          <h3 className="font-heading text-lg font-semibold text-text-heading">Webhooks</h3>
+          <p className="text-sm text-text-muted">Manage incoming and outgoing webhook endpoints.</p>
         </div>
         <Button variant="primary" size="sm" icon={<Plus size={16} />} onClick={onAdd}>
           Add Webhook
@@ -282,9 +259,11 @@ function WebhookSection({ webhooks, isLoading, onAdd, onDelete, onTest, isPendin
       </div>
 
       {webhooks.length === 0 ? (
-        <Card className="p-8 text-center border-dashed">
-          <p className="text-base-500">No webhooks configured yet.</p>
-        </Card>
+        <EmptyState
+          title="No webhooks configured yet"
+          description="Create your first webhook to start receiving events."
+          action={<Button variant="primary" onClick={onAdd} icon={<Plus size={18} />}>Add Webhook</Button>}
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {webhooks.map((webhook) => (
@@ -292,8 +271,8 @@ function WebhookSection({ webhooks, isLoading, onAdd, onDelete, onTest, isPendin
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <WebhookIcon size={16} className="text-electric-400" />
-                    <h4 className="font-medium text-white">{webhook.name}</h4>
+                    <WebhookIcon size={16} className="text-brand-primary" />
+                    <h4 className="font-medium text-text-heading">{webhook.name}</h4>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant={webhook.type === 'incoming' ? 'info' : 'warning'}>
@@ -317,15 +296,15 @@ function WebhookSection({ webhooks, isLoading, onAdd, onDelete, onTest, isPendin
                     size="sm"
                     onClick={() => onDelete(webhook.id)}
                     icon={<Trash2 size={14} />}
-                    className="text-error-500 hover:text-error-400"
+                    className="text-error-600 hover:text-error-500"
                     disabled={isPending}
                   />
                 </div>
               </div>
               <div className="mt-3">
-                <div className="flex items-center gap-2 text-xs text-base-500 bg-base-900 p-2 rounded-md font-mono truncate">
+                <div className="flex items-center gap-2 text-xs text-text-muted bg-canvas-surface p-2 rounded-xl font-mono truncate">
                   <span className="shrink-0">URL:</span>
-                  <span className="text-white truncate">{webhook.url}</span>
+                  <span className="text-text-heading truncate">{webhook.url}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -334,7 +313,7 @@ function WebhookSection({ webhooks, isLoading, onAdd, onDelete, onTest, isPendin
                   />
                 </div>
                 {webhook.last_triggered && (
-                  <p className="text-xs text-base-500 mt-1">
+                  <p className="text-xs text-text-muted mt-1">
                     Last triggered: {formatRelativeTime(webhook.last_triggered)}
                   </p>
                 )}
@@ -347,12 +326,10 @@ function WebhookSection({ webhooks, isLoading, onAdd, onDelete, onTest, isPendin
   );
 }
 
-// ─── Main Page ──────────────────────────────────────────────
 export function IntegrationsPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
-  // ── Queries ──────────────────────────────────────────────
   const {
     data: providers = [],
     isLoading: providersLoading,
@@ -372,7 +349,6 @@ export function IntegrationsPage() {
     queryFn: integrationsApi.listWebhooks,
   });
 
-  // ── Mutations ────────────────────────────────────────────
   const connectMutation = useMutation({
     mutationFn: (id: string) => integrationsApi.connect(id),
     onSuccess: () => {
@@ -438,7 +414,6 @@ export function IntegrationsPage() {
     },
   });
 
-  // ── Handlers ─────────────────────────────────────────────
   const handleToggle = (id: string, enabled: boolean) => {
     toggleMutation.mutate({ id, enabled });
   };
@@ -456,7 +431,6 @@ export function IntegrationsPage() {
   };
 
   const handleAddWebhook = () => {
-    // Open a modal/drawer – for now just alert
     alert('Open webhook creation modal');
   };
 
@@ -470,10 +444,9 @@ export function IntegrationsPage() {
     testWebhookMutation.mutate(id);
   };
 
-  // ── Loading / Error ──────────────────────────────────────
   if (providersLoading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6 animate-fade-in">
         <PageHeader title="Integrations" description="Loading integrations..." />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -486,19 +459,17 @@ export function IntegrationsPage() {
 
   if (providersError) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-6 animate-fade-in">
         <PageHeader title="Integrations" description="Failed to load integrations" />
-        <Card className="p-8 text-center">
-          <p className="text-error-500">Failed to load integrations. Please try again.</p>
-          <Button variant="secondary" className="mt-4" onClick={() => refetchProviders()}>
-            Retry
-          </Button>
-        </Card>
+        <ErrorState
+          title="Failed to load integrations"
+          description="Please try again."
+          onRetry={refetchProviders}
+        />
       </div>
     );
   }
 
-  // ── Stats ────────────────────────────────────────────────
   const connectedProviders = providers.filter((p) => p.status === 'connected');
   const syncedCount = connectedProviders.filter((p) => p.last_synced).length;
   const errorCount = providers.filter((p) => p.status === 'error').length;
@@ -512,18 +483,17 @@ export function IntegrationsPage() {
     testWebhookMutation.isPending;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Integrations"
         description="Manage GitHub, Slack, Discord, Webhooks, and other external service integrations."
       />
 
-      {/* Connected Services */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-white">Connected Services</h2>
-            <p className="text-sm text-base-500">
+            <h2 className="font-heading text-xl font-semibold text-text-heading">Connected Services</h2>
+            <p className="text-sm text-text-muted">
               {connectedProviders.length} of {providers.length} services connected
             </p>
           </div>
@@ -551,7 +521,6 @@ export function IntegrationsPage() {
         </div>
       </section>
 
-      {/* Webhooks */}
       <section>
         <WebhookSection
           webhooks={webhooks}
@@ -563,65 +532,67 @@ export function IntegrationsPage() {
         />
       </section>
 
-      {/* Sync Health */}
       <section>
         <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-white">Sync Health</h3>
-              <p className="text-sm text-base-500">Integration sync status and reliability.</p>
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-heading text-lg font-semibold text-text-heading">Sync Health</h3>
+                <p className="text-sm text-text-muted">Integration sync status and reliability.</p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<RefreshCw size={16} className={syncMutation.isPending ? 'animate-spin' : ''} />}
+                onClick={handleSyncAll}
+                disabled={syncMutation.isPending}
+              >
+                {syncMutation.isPending ? 'Syncing...' : 'Sync Now'}
+              </Button>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<RefreshCw size={16} className={syncMutation.isPending ? 'animate-spin' : ''} />}
-              onClick={handleSyncAll}
-              disabled={syncMutation.isPending}
-            >
-              {syncMutation.isPending ? 'Syncing...' : 'Sync Now'}
-            </Button>
-          </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="flex items-center gap-3 p-3 bg-canvas-surface rounded-xl border border-canvas-border">
+                <div className="p-2 rounded-lg bg-success-100 text-success-600">
+                  <CheckCircle2 size={20} />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-text-heading">{connectedProviders.length}</p>
+                  <p className="text-xs text-text-muted">Connected Services</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-canvas-surface rounded-xl border border-canvas-border">
+                <div className="p-2 rounded-lg bg-warning-100 text-warning-600">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-text-heading">{syncedCount}</p>
+                  <p className="text-xs text-text-muted">Synced Today</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-canvas-surface rounded-xl border border-canvas-border">
+                <div className="p-2 rounded-lg bg-error-100 text-error-600">
+                  <XCircle size={20} />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-text-heading">{errorCount}</p>
+                  <p className="text-xs text-text-muted">Sync Errors</p>
+                </div>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-            <div className="flex items-center gap-3 p-3 bg-base-800/50 rounded-lg">
-              <div className="p-2 rounded-lg bg-success-500/10 text-success-500">
-                <CheckCircle2 size={20} />
+            <div className="mt-4 pt-4 border-t border-canvas-border">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-text-muted">Last sync</span>
+                <span className="text-text-heading">{formatRelativeTime(new Date().toISOString())}</span>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{connectedProviders.length}</p>
-                <p className="text-xs text-base-500">Connected Services</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-3 bg-base-800/50 rounded-lg">
-              <div className="p-2 rounded-lg bg-warning-500/10 text-warning-500">
-                <Clock size={20} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{syncedCount}</p>
-                <p className="text-xs text-base-500">Synced Today</p>
+              <div className="flex items-center justify-between text-sm mt-1">
+                <span className="text-text-muted">Sync interval</span>
+                <span className="text-text-heading">15 minutes</span>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-base-800/50 rounded-lg">
-              <div className="p-2 rounded-lg bg-error-500/10 text-error-500">
-                <XCircle size={20} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-white">{errorCount}</p>
-                <p className="text-xs text-base-500">Sync Errors</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-base-800">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-base-500">Last sync</span>
-              <span className="text-white">{formatRelativeTime(new Date().toISOString())}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm mt-1">
-              <span className="text-base-500">Sync interval</span>
-              <span className="text-white">15 minutes</span>
-            </div>
-          </div>
+          </CardContent>
         </Card>
       </section>
     </div>

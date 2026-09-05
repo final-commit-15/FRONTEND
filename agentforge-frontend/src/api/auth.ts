@@ -1,27 +1,41 @@
-// src/api/auth.ts
-
 import { apiClient } from './client';
+import type {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+} from '@/types/api';
 import type { User } from '@/types/models';
-import type { LoginRequest, LoginResponse, RegisterRequest } from '@/types/api';
 
 export const authApi = {
-  // Get current user (used in useAuth's useQuery)
-  me: async (): Promise<User | null> => {
-    try {
-      const { data } = await apiClient.get<User>('/auth/me');
-      return data;
-    } catch {
-      return null; // Not authenticated
-    }
-  },
+  login: async (credentials: LoginRequest) => {
+    const { data: tokens } = await apiClient.post<LoginResponse>(
+      "/auth/login",
+      credentials
+    );
 
-  login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const { data } = await apiClient.post<LoginResponse>('/auth/login', credentials);
-    return data;
+    apiClient.defaults.headers.common.Authorization =
+      `Bearer ${tokens.access_token}`;
+
+    const { data: user } = await apiClient.get<User>("/auth/me");
+
+    return {
+      ...tokens,
+      user,
+    };
   },
 
   register: async (payload: RegisterRequest): Promise<LoginResponse> => {
-    const { data } = await apiClient.post<LoginResponse>('/auth/register', payload);
+    const { data } = await apiClient.post('/auth/register', {
+      email: payload.email,
+      username: payload.email.split('@')[0],
+      full_name: payload.name,
+      password: payload.password,
+    });
+    return data;
+  },
+
+  me: async (): Promise<User> => {
+    const { data } = await apiClient.get('/auth/me');
     return data;
   },
 

@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { agentsApi } from '@/api/agents';
 import { AgentForm } from '@/components/agents/AgentForm';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { DetailSkeleton } from '@/components/ui/Skeleton';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 
 export function AgentEditPage() {
@@ -17,7 +17,14 @@ export function AgentEditPage() {
     enabled: !!id,
   });
 
-  if (isLoading) return <DetailSkeleton />;
+  if (isLoading) {
+    return (
+      <div className="animate-fade-in">
+        <Skeleton variant="title" className="w-56" />
+        <Skeleton variant="card" className="h-96" />
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -40,7 +47,7 @@ export function AgentEditPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <PageHeader title="Edit Agent" description={`Editing ${agent.name}`} />
       <AgentForm initialData={agent} mode="edit" agentId={agent.id} />
     </div>

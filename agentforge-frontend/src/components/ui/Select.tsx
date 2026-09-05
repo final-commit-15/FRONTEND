@@ -9,28 +9,29 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, label, error, hint, id, children, ...props }, ref) => {
+    const selectId = id || React.useId();
     return (
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-base-300">
+          <label htmlFor={selectId} className="label">
             {label}
           </label>
         )}
         <select
           ref={ref}
-          id={id}
+          id={selectId}
           className={cn(
-            'w-full px-3 py-2 bg-base-800/50 border rounded-lg text-sm text-white',
-            'focus:border-electric-500 focus:ring-2 focus:ring-electric-500/30 transition-colors',
-            error ? 'border-error-500' : 'border-base-700',
+            'w-full px-4 py-3 bg-canvas-surface border rounded-xl text-sm text-text-heading appearance-none',
+            'focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-canvas transition-all duration-200',
+            error ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20' : 'border-canvas-border',
             className
           )}
           {...props}
         >
           {children}
         </select>
-        {hint && !error && <p className="text-xs text-base-500">{hint}</p>}
-        {error && <p className="text-xs text-error-500">{error}</p>}
+        {hint && !error && <p className="hint">{hint}</p>}
+        {error && <p className="error-text">{error}</p>}
       </div>
     );
   }

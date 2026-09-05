@@ -13,7 +13,7 @@ export type ExecutionCreatePayload = ExecuteAgentRequest;
 
 export const executionsApi = {
   list: async (params: ExecutionListParams = {}): Promise<ExecutionListResponse> => {
-    const { data } = await apiClient.get<ExecutionListResponse>('/executions', { params });
+    const { data } = await apiClient.get<ExecutionListResponse>('/executions/', { params });
     return data;
   },
 

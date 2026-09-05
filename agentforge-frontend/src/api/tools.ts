@@ -3,6 +3,7 @@
 import { apiClient } from './client';
 import type { Tool } from '@/types/api';
 
+
 export const toolsApi = {
   // List tools with optional filtering (category, status)
   list: async (params?: { category?: string; status?: string }): Promise<Tool[]> => {

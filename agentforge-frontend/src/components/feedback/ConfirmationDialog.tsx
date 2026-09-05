@@ -26,8 +26,8 @@ export function ConfirmationDialog({
   danger,
 }: ConfirmationDialogProps) {
   return (
-    <Dialog open={open} onClose={onCancel} title={title}>
-      <p className="text-sm text-base-400">{description}</p>
+    <Dialog open={open} onOpenChange={onCancel} title={title}>
+      <p className="text-sm text-text-muted">{description}</p>
       <div className="flex justify-end gap-2 mt-6">
         <Button variant="secondary" onClick={onCancel} disabled={loading}>
           {cancelLabel}

@@ -1,25 +1,33 @@
 import React from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { cn } from '../../lib/utils';
 import { Button } from './Button';
+import { RotateCcw } from 'lucide-react';
 
 interface ErrorStateProps {
   title: string;
   description?: string;
-  actionLabel?: string;
   onRetry?: () => void;
+  retryLabel?: string;
+  icon?: React.ReactNode;
+  className?: string;
 }
 
-export function ErrorState({ title, description, actionLabel = 'Try again', onRetry }: ErrorStateProps) {
+export function ErrorState({ title, description, onRetry, retryLabel = 'Try again', icon, className }: ErrorStateProps) {
   return (
-    <div className="card p-12 flex flex-col items-center justify-center text-center">
-      <div className="w-16 h-16 rounded-full bg-error-700/10 flex items-center justify-center mb-4">
-        <AlertTriangle size={28} className="text-error-500" />
-      </div>
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
-      {description && <p className="mt-2 text-sm text-base-400 max-w-sm">{description}</p>}
+    <div className={cn('empty-state', className)}>
+      {icon || (
+        <div className="empty-state-icon text-error-500/50">
+          <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+      )}
+      <h3 className="empty-state-title">{title}</h3>
+      {description && <p className="empty-state-description">{description}</p>}
       {onRetry && (
-        <Button variant="secondary" onClick={onRetry} className="mt-6" icon={<RefreshCw size={16} />}>
-          {actionLabel}
+        <Button variant="primary" onClick={onRetry} className="mt-6 gap-2">
+          <RotateCcw size={16} />
+          {retryLabel}
         </Button>
       )}
     </div>

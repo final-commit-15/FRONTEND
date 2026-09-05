@@ -9,27 +9,27 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, label, error, hint, id, ...props }, ref) => {
+    const textareaId = id || React.useId();
     return (
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {label && (
-          <label htmlFor={id} className="block text-sm font-medium text-base-300">
+          <label htmlFor={textareaId} className="label">
             {label}
           </label>
         )}
         <textarea
           ref={ref}
-          id={id}
+          id={textareaId}
           className={cn(
-            'w-full px-3 py-2 bg-base-800/50 border rounded-lg text-sm text-white placeholder-base-500',
-            'focus:border-electric-500 focus:ring-2 focus:ring-electric-500/30 transition-colors',
-            'resize-y min-h-[80px]',
-            error ? 'border-error-500' : 'border-base-700',
+            'w-full px-4 py-3 bg-canvas-surface border rounded-xl text-sm text-text-heading placeholder-text-muted resize-y min-h-[100px]',
+            'focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:bg-canvas transition-all duration-200',
+            error ? 'border-error-500 focus:border-error-500 focus:ring-error-500/20' : 'border-canvas-border',
             className
           )}
           {...props}
         />
-        {hint && !error && <p className="text-xs text-base-500">{hint}</p>}
-        {error && <p className="text-xs text-error-500">{error}</p>}
+        {hint && !error && <p className="hint">{hint}</p>}
+        {error && <p className="error-text">{error}</p>}
       </div>
     );
   }

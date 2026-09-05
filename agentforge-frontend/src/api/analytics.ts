@@ -7,9 +7,19 @@ import {
 } from '@/types/api';
 
 export const analyticsApi = {
-  getOverview: async (): Promise<AnalyticsOverview> => {
-    const { data } = await apiClient.get<AnalyticsOverview>('/analytics/overview');
-    return data;
+  getOverview: async () => {
+    try {
+      const { data } = await apiClient.get("/analytics/overview");
+      return data;
+    } catch {
+      return {
+        total_agents: 0,
+        total_tasks: 0,
+        total_executions: 0,
+        success_rate: 0,
+        active_agents: 0,
+      };
+    }
   },
 
   getExecutionActivity: async (range: '24h' | '7d' | '30d' | '90d' = '7d'): Promise<ExecutionActivityPoint[]> => {
