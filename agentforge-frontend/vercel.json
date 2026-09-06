@@ -4,7 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "regions": ["iad1"],
 
   "headers": [
@@ -56,7 +56,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://YOUR-BACKEND-DOMAIN/api/$1"
+      "destination": "https://api.agentforge.example.com/api/$1"
     },
     {
       "source": "/(.*)",
