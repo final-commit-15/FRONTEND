@@ -10,7 +10,7 @@
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && node ./node_modules/vite/bin/vite.js build",
     "preview": "vite preview",
     "lint": "eslint ."
   },
