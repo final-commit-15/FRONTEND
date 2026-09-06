@@ -3,11 +3,14 @@
   "version": "1.0.0",
   "type": "module",
   "main": ".eslintrc.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "dev": "vite",
-    "build": "node ./node_modules/typescript/bin/tsc -b && node ./node_modules/vite/bin/vite.js build",
+    "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint ."
   },
@@ -49,7 +52,7 @@
     "jsdom": "^29.1.1",
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.17",
-    "typescript": "^7.0.2",
+    "typescript": "^5.8.3",
     "typescript-eslint": "^8.67.0",
     "vite": "^8.2.1",
     "vite-plugin-pwa": "^1.3.0",
