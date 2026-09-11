@@ -37,14 +37,14 @@ export function AgentFilters({
         />
       </div>
       <div className="w-40">
-        <Select label="Status" value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)}>
+        <Select label="Status" value={statusFilter} onChange={(value) => onStatusFilterChange(value)}>
           <option value="all">All</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </Select>
       </div>
       <div className="w-40">
-        <Select label="Type" value={typeFilter} onChange={(e) => onTypeFilterChange(e.target.value)}>
+        <Select label="Type" value={typeFilter} onChange={(value) => onTypeFilterChange(value)}>
           <option value="all">All Types</option>
           {AGENT_TYPES.map((type) => (
             <option key={type} value={type}>{type}</option>
@@ -52,7 +52,7 @@ export function AgentFilters({
         </Select>
       </div>
       <div className="w-48">
-        <Select label="Sort By" value={sortBy} onChange={(e) => onSortChange(e.target.value)}>
+        <Select label="Sort By" value={sortBy} onChange={(value) => onSortChange(value)}>
           <option value="-created_at">Newest</option>
           <option value="created_at">Oldest</option>
           <option value="-execution_count">Most Executions</option>

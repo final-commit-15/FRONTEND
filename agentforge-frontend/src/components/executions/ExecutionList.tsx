@@ -30,7 +30,7 @@ function getStatusVariant(status: Execution['status']): 'success' | 'warning' | 
 
 export function ExecutionList({ executions = [], onRetry, onCancel }: ExecutionListProps) {
   if (executions.length === 0) {
-    return <p className="text-base-500">No executions found.</p>;
+    return <p className="text-text-muted">No executions found.</p>;
   }
 
   const columns: TableColumn<Execution>[] = [
@@ -38,7 +38,7 @@ export function ExecutionList({ executions = [], onRetry, onCancel }: ExecutionL
       key: 'id',
       label: 'ID',
       render: (_, row) => (
-        <Link to={`/executions/${row.id}`} className="font-mono text-xs hover:text-electric-400">
+        <Link to={`/executions/${row.id}`} className="font-mono text-xs text-text-body hover:text-brand-secondary">
           {row.id.slice(0, 8)}...
         </Link>
       ),
@@ -47,7 +47,7 @@ export function ExecutionList({ executions = [], onRetry, onCancel }: ExecutionL
       key: 'agent_name',
       label: 'Agent',
       render: (_, row) => (
-        <Link to={`/agents/${row.agent_id}`} className="hover:text-electric-400">
+        <Link to={`/agents/${row.agent_id}`} className="text-text-body hover:text-brand-secondary">
           {row.agent_name}
         </Link>
       ),
@@ -56,7 +56,7 @@ export function ExecutionList({ executions = [], onRetry, onCancel }: ExecutionL
       key: 'task_name',
       label: 'Task',
       render: (_, row) => (
-        <Link to={`/tasks/${row.task_id}`} className="hover:text-electric-400">
+        <Link to={`/tasks/${row.task_id}`} className="text-text-body hover:text-brand-secondary">
           {row.task_name}
         </Link>
       ),
@@ -69,7 +69,7 @@ export function ExecutionList({ executions = [], onRetry, onCancel }: ExecutionL
     {
       key: 'started_at',
       label: 'Started',
-      render: (value) => <span className="text-base-400">{formatDateTime(value as string)}</span>,
+      render: (value) => <span className="text-text-muted">{formatDateTime(value as string)}</span>,
     },
     {
       key: 'duration',
@@ -82,7 +82,7 @@ export function ExecutionList({ executions = [], onRetry, onCancel }: ExecutionL
       render: (_, row) => (
         <Dropdown
           trigger={
-            <button className="p-1.5 rounded-lg text-base-500 hover:text-white hover:bg-base-800 transition-colors">
+            <button className="p-1.5 rounded-lg text-text-muted hover:text-text-heading hover:bg-canvas-surface transition-colors">
               <MoreVertical size={16} />
             </button>
           }
@@ -91,7 +91,7 @@ export function ExecutionList({ executions = [], onRetry, onCancel }: ExecutionL
             {(row.status === 'failed' || row.status === 'cancelled') && onRetry && (
               <button
                 onClick={() => onRetry(row.id)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-base-300 hover:bg-base-800 rounded-lg w-full text-left"
+                className="flex items-center gap-2 px-3 py-2 text-sm text-text-body hover:bg-canvas-surface rounded-lg w-full text-left"
               >
                 <RotateCcw size={16} /> Retry
               </button>
@@ -106,7 +106,7 @@ export function ExecutionList({ executions = [], onRetry, onCancel }: ExecutionL
             )}
             <Link
               to={`/executions/${row.id}`}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-base-300 hover:bg-base-800 rounded-lg"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-text-body hover:bg-canvas-surface rounded-lg"
             >
               <TerminalSquare size={16} /> View Details
             </Link>

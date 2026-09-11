@@ -19,11 +19,11 @@ export function Breadcrumbs() {
     <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
       {crumbs.map((crumb, index) => (
         <React.Fragment key={crumb.path}>
-          {index > 0 && <ChevronRight size={14} className="text-base-600" />}
+          {index > 0 && <ChevronRight size={14} className="text-text-muted" />}
           {index === crumbs.length - 1 ? (
-            <span className="text-base-400">{crumb.label}</span>
+            <span className="text-text-heading">{crumb.label}</span>
           ) : (
-            <Link to={crumb.path} className="text-base-500 hover:text-white transition-colors">
+            <Link to={crumb.path} className="text-text-muted hover:text-text-heading transition-colors">
               {crumb.label}
             </Link>
           )}

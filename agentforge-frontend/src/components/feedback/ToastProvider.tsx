@@ -37,14 +37,14 @@ export function ToastProvider() {
               toast.type === 'warning' ? 'text-warning-500' : 'text-info-500'
             } />
             <div className="flex-1">
-              <p className="text-sm font-medium text-white">{toast.title}</p>
+              <p className="text-sm font-medium text-text-heading">{toast.title}</p>
               {toast.description && (
-                <p className="mt-1 text-sm text-base-400">{toast.description}</p>
+                <p className="mt-1 text-sm text-text-muted">{toast.description}</p>
               )}
             </div>
             <button
               onClick={() => removeToast(toast.id)}
-              className="text-base-500 hover:text-white transition-colors"
+              className="text-text-muted hover:text-text-heading transition-colors"
               aria-label="Close notification"
             >
               <X size={16} />

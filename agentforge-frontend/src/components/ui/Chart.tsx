@@ -22,10 +22,10 @@ export function Chart<T>({ data, xKey, yKey, className, height = 300 }: ChartPro
           return (
             <div key={idx} className="flex flex-col items-center flex-1">
               <div
-                className="w-full bg-electric-500/40 rounded-t"
+                className="w-full bg-brand-primary/40 rounded-t"
                 style={{ height: `${heightPct}%` }}
               />
-              <span className="mt-1 text-xs text-base-500">
+              <span className="mt-1 text-xs text-text-muted">
                 {String(item[xKey])}
               </span>
             </div>

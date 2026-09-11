@@ -31,7 +31,7 @@ export function ExecutionFilters({
         />
       </div>
       <div className="w-40">
-        <Select label="Status" value={statusFilter} onChange={(e) => onStatusFilterChange(e.target.value)}>
+        <Select label="Status" value={statusFilter} onChange={(value) => onStatusFilterChange(value)}>
           <option value="all">All</option>
           {EXECUTION_STATUSES.map((status) => (
             <option key={status} value={status}>{status}</option>
@@ -39,7 +39,7 @@ export function ExecutionFilters({
         </Select>
       </div>
       <div className="w-48">
-        <Select label="Sort By" value={sortBy} onChange={(e) => onSortChange(e.target.value)}>
+        <Select label="Sort By" value={sortBy} onChange={(value) => onSortChange(value)}>
           <option value="-started_at">Newest First</option>
           <option value="started_at">Oldest First</option>
           <option value="-duration">Longest Duration</option>

@@ -1,8 +1,9 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Bot, ListChecks, TerminalSquare,
-  BarChart3, Wrench, ShieldCheck, Plug, Activity, Settings,
-  ChevronLeft, ChevronRight, Search, LogOut
+  LayoutDashboard, Bot, ListChecks, CalendarDays,
+  Users, GitBranch, BookOpen, Settings,
+  ChevronLeft, ChevronRight, Search, LogOut,
+  FolderKanban, Globe, BarChart3, Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,33 +15,50 @@ interface NavItem {
   icon: React.ElementType;
 }
 
+// Single source of truth for left nav — exactly one entry per top-level
+// router path. No duplicates, no dead links.
+// NOTE: `/notifications` was removed — it had no router route (dead link).
+// Notifications live in the TopBar bell + `/activity` feed.
 const navSections: { title: string; items: NavItem[] }[] = [
   {
     title: 'Overview',
     items: [
       { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { to: '/agents', label: 'Agents', icon: Bot },
+      { to: '/projects', label: 'Projects', icon: FolderKanban },
       { to: '/tasks', label: 'Tasks', icon: ListChecks },
-      { to: '/executions', label: 'Executions', icon: TerminalSquare },
+      { to: '/sprint-journal', label: 'Sprint Journal', icon: CalendarDays },
+    ],
+  },
+  {
+    title: 'Team & AI',
+    items: [
+      { to: '/team-members', label: 'Team Members', icon: Users },
+      { to: '/agents', label: 'AI Agents', icon: Bot },
+      { to: '/github-reviews', label: 'GitHub Reviews', icon: GitBranch },
+    ],
+  },
+  {
+    title: 'Insights',
+    items: [
       { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-    ],
-  },
-  {
-    title: 'Management',
-    items: [
-      { to: '/tools', label: 'Tools', icon: Wrench },
-      { to: '/permissions', label: 'Permissions', icon: ShieldCheck },
-      { to: '/integrations', label: 'Integrations', icon: Plug },
-    ],
-  },
-  {
-    title: 'System',
-    items: [
       { to: '/activity', label: 'Activity', icon: Activity },
+    ],
+  },
+  {
+    title: 'Knowledge & System',
+    items: [
+      { to: '/knowledge-base', label: 'Knowledge Base', icon: BookOpen },
+      { to: '/integrations', label: 'Integrations', icon: Globe },
       { to: '/settings', label: 'Settings', icon: Settings },
     ],
   },
 ];
+
+// Build-time guard: fail fast if a `to` is ever duplicated.
+const allNavPaths = navSections.flatMap((s) => s.items.map((i) => i.to));
+if (new Set(allNavPaths).size !== allNavPaths.length) {
+  throw new Error(`Duplicate sidebar route detected: ${allNavPaths.join(', ')}`);
+}
 
 interface SidebarProps {
   collapsed: boolean;

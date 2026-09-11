@@ -2,17 +2,16 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { Button } from './Button';
 
 interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
   className?: string;
-  title?: string;
-  description?: string;
 }
 
-export function Dialog({ open, onOpenChange, children, className, title, description }: DialogProps) {
+export function Dialog({ open, onOpenChange, children, className }: DialogProps) {
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onOpenChange(false);
   };
@@ -36,12 +35,6 @@ export function Dialog({ open, onOpenChange, children, className, title, descrip
   const content = (
     <div className="modal-backdrop" onClick={handleOverlayClick}>
       <div className={cn('modal-content max-w-lg', className)}>
-        {(title || description) && (
-          <div className="px-6 py-5 border-b border-canvas-border">
-            {title && <h3 className="text-lg font-semibold text-text-heading">{title}</h3>}
-            {description && <p className="text-sm text-text-body mt-1">{description}</p>}
-          </div>
-        )}
         <div className="p-6">
           {children}
         </div>
@@ -57,6 +50,51 @@ export function Dialog({ open, onOpenChange, children, className, title, descrip
   );
 
   return createPortal(content, document.body);
+}
+
+interface DialogContentProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DialogContent({ children, className }: DialogContentProps) {
+  return <div className={cn('', className)}>{children}</div>;
+}
+
+interface DialogHeaderProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DialogHeader({ children, className }: DialogHeaderProps) {
+  return <div className={cn('space-y-2', className)}>{children}</div>;
+}
+
+interface DialogTitleProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DialogTitle({ children, className }: DialogTitleProps) {
+  return <h3 className={cn('text-lg font-semibold text-text-heading', className)}>{children}</h3>;
+}
+
+interface DialogDescriptionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DialogDescription({ children, className }: DialogDescriptionProps) {
+  return <p className={cn('text-sm text-text-body', className)}>{children}</p>;
+}
+
+interface DialogFooterProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function DialogFooter({ children, className }: DialogFooterProps) {
+  return <div className={cn('flex justify-end gap-3 mt-4 pt-4 border-t border-canvas-border', className)}>{children}</div>;
 }
 
 interface AlertDialogProps {
@@ -114,5 +152,3 @@ export function AlertDialog({
     document.body
   );
 }
-
-import { Button } from './Button';

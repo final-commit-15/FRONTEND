@@ -24,7 +24,7 @@ export function SystemSettings({ system }: SystemSettingsProps) {
 
   return (
     <Card className="p-6 max-w-2xl">
-      <h2 className="text-lg font-semibold text-white mb-4">System Configuration</h2>
+      <h2 className="text-lg font-semibold text-text-heading mb-4">System Configuration</h2>
       <div className="space-y-4">
         <Input
           label="Max Concurrent Executions"
@@ -32,7 +32,7 @@ export function SystemSettings({ system }: SystemSettingsProps) {
           value={form.max_concurrent_executions}
           onChange={(e) => setForm({ ...form, max_concurrent_executions: parseInt(e.target.value) })}
         />
-        <Select label="Log Level" value={form.log_level} onChange={(e) => setForm({ ...form, log_level: e.target.value })}>
+        <Select label="Log Level" value={form.log_level} onChange={(value) => setForm({ ...form, log_level: value })}>
           <option value="debug">Debug</option>
           <option value="info">Info</option>
           <option value="warn">Warn</option>

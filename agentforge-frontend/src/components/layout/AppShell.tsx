@@ -1,7 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+
+function CursorGlow() {
+  const glowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const el = glowRef.current;
+      if (!el) return;
+      el.style.setProperty('--cursor-x', `${e.clientX}px`);
+      el.style.setProperty('--cursor-y', `${e.clientY}px`);
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
+  return <div ref={glowRef} className="cursor-glow-overlay" aria-hidden="true" />;
+}
 
 export function AppShell() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -9,6 +26,7 @@ export function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-canvas">
+      <CursorGlow />
       {/* Desktop Sidebar */}
       <aside className={`hidden lg:block transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-72'}`}>
         <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />

@@ -16,17 +16,17 @@ export function AgentDetailHeader({ agent }: AgentDetailHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-electric-500/20 to-violet-500/20 flex items-center justify-center">
-          <Bot size={24} className="text-electric-400" />
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary/20 to-brand-secondary/20 flex items-center justify-center">
+          <Bot size={24} className="text-brand-secondary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">{agent.name}</h1>
+          <h1 className="text-2xl font-bold text-text-heading">{agent.name}</h1>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-sm text-base-500">{agent.type}</span>
-            <span className="text-base-600">•</span>
+            <span className="text-sm text-text-muted">{agent.type}</span>
+            <span className="text-text-muted">•</span>
             <StatusBadge status={agent.status} />
-            <span className="text-base-600">•</span>
-            <span className="text-sm text-base-500">Created {formatDate(agent.created_at)}</span>
+            <span className="text-text-muted">•</span>
+            <span className="text-sm text-text-muted">Created {formatDate(agent.created_at)}</span>
           </div>
         </div>
       </div>

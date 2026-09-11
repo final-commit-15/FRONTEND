@@ -1,30 +1,22 @@
-// src/pages/IntegrationsPage.tsx
-
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import {
   GitBranch,
+  Database,
   MessagesSquare,
-  HardDrive,
-  NotepadText,
-  Briefcase,
+  Brain,
   Mail,
-  Building2,
-  Webhook as WebhookIcon,
   RefreshCw,
   CheckCircle2,
   XCircle,
   Clock,
-  Plus,
-  Trash2,
-  Zap,
-  ExternalLink,
   Loader2,
+  ExternalLink,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/api/client';
@@ -42,16 +34,6 @@ interface IntegrationProvider {
   account?: string | null;
   last_synced?: string | null;
   enabled: boolean;
-}
-
-interface Webhook {
-  id: string;
-  name: string;
-  type: 'incoming' | 'outgoing';
-  url: string;
-  secret?: string;
-  status: 'active' | 'inactive' | 'error';
-  last_triggered?: string | null;
 }
 
 const integrationsApi = {
@@ -77,24 +59,6 @@ const integrationsApi = {
     apiClient.patch(`/integrations/${id}`, payload).then((res) => res.data),
 
   sync: () => apiClient.post('/integrations/sync').then((res) => res.data),
-
-  listWebhooks: () =>
-    apiClient.get('/webhooks').then((res) => {
-      const data = res.data;
-      if (Array.isArray(data)) return data;
-      if (data && typeof data === 'object') {
-        if (Array.isArray(data.items)) return data.items;
-        if (Array.isArray(data.data)) return data.data;
-        if (Array.isArray(data.results)) return data.results;
-      }
-      return [];
-    }),
-
-  deleteWebhook: (id: string) =>
-    apiClient.delete(`/webhooks/${id}`).then((res) => res.data),
-
-  testWebhook: (id: string) =>
-    apiClient.post(`/webhooks/${id}/test`).then((res) => res.data),
 };
 
 function Toggle({ checked, onCheckedChange }: { checked: boolean; onCheckedChange: (checked: boolean) => void }) {
@@ -119,13 +83,11 @@ function Toggle({ checked, onCheckedChange }: { checked: boolean; onCheckedChang
   );
 }
 
-function getStatusBadge(status: IntegrationProvider['status'] | Webhook['status']) {
+function getStatusBadge(status: IntegrationProvider['status']) {
   switch (status) {
     case 'connected':
-    case 'active':
       return <Badge variant="success">Connected</Badge>;
     case 'disconnected':
-    case 'inactive':
       return <Badge variant="neutral">Disconnected</Badge>;
     case 'error':
       return <Badge variant="error">Error</Badge>;
@@ -136,15 +98,21 @@ function getStatusBadge(status: IntegrationProvider['status'] | Webhook['status'
 
 const iconMap: Record<string, React.ElementType> = {
   github: GitBranch,
+  supabase: Database,
   slack: MessagesSquare,
-  discord: MessagesSquare,
-  googledrive: HardDrive,
-  notion: NotepadText,
-  jira: Briefcase,
-  gmail: Mail,
-  outlook: Building2,
-  webhook: WebhookIcon,
+  openai: Brain,
+  email: Mail,
 };
+
+const providerDescriptions: Record<string, string> = {
+  github: 'Connect GitHub to manage repositories, pull requests, and code reviews',
+  supabase: 'Connect Supabase for database, auth, and realtime subscriptions',
+  slack: 'Connect Slack for team notifications and collaboration',
+  openai: 'Connect OpenAI for AI-powered features and agents',
+  email: 'Configure email provider for notifications and alerts',
+};
+
+const allowedProviders = ['github', 'supabase', 'slack', 'openai', 'email'];
 
 interface ProviderCardProps {
   provider: IntegrationProvider;
@@ -155,7 +123,8 @@ interface ProviderCardProps {
 }
 
 function ProviderCard({ provider, onToggle, onConnect, onDisconnect, isPending }: ProviderCardProps) {
-  const Icon = iconMap[provider.id] || WebhookIcon;
+  const Icon = iconMap[provider.id] || Zap;
+  const description = providerDescriptions[provider.id] || '';
 
   return (
     <Card className="card-hover p-5 flex flex-col gap-3">
@@ -166,7 +135,7 @@ function ProviderCard({ provider, onToggle, onConnect, onDisconnect, isPending }
           </div>
           <div>
             <h4 className="font-semibold text-text-heading">{provider.name}</h4>
-            <p className="text-xs text-text-muted">{provider.description}</p>
+            <p className="text-xs text-text-muted">{description}</p>
           </div>
         </div>
         {getStatusBadge(provider.status)}
@@ -220,112 +189,6 @@ function ProviderCard({ provider, onToggle, onConnect, onDisconnect, isPending }
   );
 }
 
-interface WebhookSectionProps {
-  webhooks: Webhook[];
-  isLoading: boolean;
-  onAdd: () => void;
-  onDelete: (id: string) => void;
-  onTest: (id: string) => void;
-  isPending?: boolean;
-}
-
-function WebhookSection({ webhooks, isLoading, onAdd, onDelete, onTest, isPending }: WebhookSectionProps) {
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-heading text-lg font-semibold text-text-heading">Webhooks</h3>
-            <p className="text-sm text-text-muted">Loading webhooks...</p>
-          </div>
-        </div>
-        <Card className="p-8 text-center border-dashed border-canvas-border">
-          <Loader2 className="animate-spin mx-auto text-text-muted" size={24} />
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-heading text-lg font-semibold text-text-heading">Webhooks</h3>
-          <p className="text-sm text-text-muted">Manage incoming and outgoing webhook endpoints.</p>
-        </div>
-        <Button variant="primary" size="sm" icon={<Plus size={16} />} onClick={onAdd}>
-          Add Webhook
-        </Button>
-      </div>
-
-      {webhooks.length === 0 ? (
-        <EmptyState
-          title="No webhooks configured yet"
-          description="Create your first webhook to start receiving events."
-          action={<Button variant="primary" onClick={onAdd} icon={<Plus size={18} />}>Add Webhook</Button>}
-        />
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {webhooks.map((webhook) => (
-            <Card key={webhook.id} className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <WebhookIcon size={16} className="text-brand-primary" />
-                    <h4 className="font-medium text-text-heading">{webhook.name}</h4>
-                  </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant={webhook.type === 'incoming' ? 'info' : 'warning'}>
-                      {webhook.type}
-                    </Badge>
-                    {getStatusBadge(webhook.status)}
-                  </div>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onTest(webhook.id)}
-                    icon={<Zap size={14} />}
-                    disabled={isPending}
-                  >
-                    Test
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(webhook.id)}
-                    icon={<Trash2 size={14} />}
-                    className="text-error-600 hover:text-error-500"
-                    disabled={isPending}
-                  />
-                </div>
-              </div>
-              <div className="mt-3">
-                <div className="flex items-center gap-2 text-xs text-text-muted bg-canvas-surface p-2 rounded-xl font-mono truncate">
-                  <span className="shrink-0">URL:</span>
-                  <span className="text-text-heading truncate">{webhook.url}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon={<ExternalLink size={12} />}
-                    className="ml-auto shrink-0"
-                  />
-                </div>
-                {webhook.last_triggered && (
-                  <p className="text-xs text-text-muted mt-1">
-                    Last triggered: {formatRelativeTime(webhook.last_triggered)}
-                  </p>
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export function IntegrationsPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
@@ -338,15 +201,6 @@ export function IntegrationsPage() {
   } = useQuery<IntegrationProvider[]>({
     queryKey: ['integrations'],
     queryFn: integrationsApi.list,
-  });
-
-  const {
-    data: webhooks = [],
-    isLoading: webhooksLoading,
-    refetch: refetchWebhooks,
-  } = useQuery<Webhook[]>({
-    queryKey: ['webhooks'],
-    queryFn: integrationsApi.listWebhooks,
   });
 
   const connectMutation = useMutation({
@@ -393,27 +247,6 @@ export function IntegrationsPage() {
     },
   });
 
-  const deleteWebhookMutation = useMutation({
-    mutationFn: (id: string) => integrationsApi.deleteWebhook(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['webhooks'] });
-      addToast({ type: 'success', title: 'Webhook deleted' });
-    },
-    onError: () => {
-      addToast({ type: 'error', title: 'Deletion failed' });
-    },
-  });
-
-  const testWebhookMutation = useMutation({
-    mutationFn: (id: string) => integrationsApi.testWebhook(id),
-    onSuccess: () => {
-      addToast({ type: 'success', title: 'Webhook test sent' });
-    },
-    onError: () => {
-      addToast({ type: 'error', title: 'Test failed' });
-    },
-  });
-
   const handleToggle = (id: string, enabled: boolean) => {
     toggleMutation.mutate({ id, enabled });
   };
@@ -430,26 +263,12 @@ export function IntegrationsPage() {
     syncMutation.mutate();
   };
 
-  const handleAddWebhook = () => {
-    alert('Open webhook creation modal');
-  };
-
-  const handleDeleteWebhook = (id: string) => {
-    if (confirm('Are you sure you want to delete this webhook?')) {
-      deleteWebhookMutation.mutate(id);
-    }
-  };
-
-  const handleTestWebhook = (id: string) => {
-    testWebhookMutation.mutate(id);
-  };
-
   if (providersLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader title="Integrations" description="Loading integrations..." />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} className="p-5 animate-pulse h-48" />
           ))}
         </div>
@@ -470,23 +289,24 @@ export function IntegrationsPage() {
     );
   }
 
-  const connectedProviders = providers.filter((p) => p.status === 'connected');
+  // Filter to only allowed providers
+  const filteredProviders = providers.filter(p => allowedProviders.includes(p.id));
+
+  const connectedProviders = filteredProviders.filter((p) => p.status === 'connected');
   const syncedCount = connectedProviders.filter((p) => p.last_synced).length;
-  const errorCount = providers.filter((p) => p.status === 'error').length;
+  const errorCount = filteredProviders.filter((p) => p.status === 'error').length;
 
   const isPending =
     connectMutation.isPending ||
     disconnectMutation.isPending ||
     toggleMutation.isPending ||
-    syncMutation.isPending ||
-    deleteWebhookMutation.isPending ||
-    testWebhookMutation.isPending;
+    syncMutation.isPending;
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Integrations"
-        description="Manage GitHub, Slack, Discord, Webhooks, and other external service integrations."
+        description="Manage your connected services and external integrations."
       />
 
       <section>
@@ -494,7 +314,7 @@ export function IntegrationsPage() {
           <div>
             <h2 className="font-heading text-xl font-semibold text-text-heading">Connected Services</h2>
             <p className="text-sm text-text-muted">
-              {connectedProviders.length} of {providers.length} services connected
+              {connectedProviders.length} of {filteredProviders.length} services connected
             </p>
           </div>
           <Button
@@ -508,7 +328,7 @@ export function IntegrationsPage() {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {providers.map((provider) => (
+          {filteredProviders.map((provider) => (
             <ProviderCard
               key={provider.id}
               provider={provider}
@@ -519,17 +339,6 @@ export function IntegrationsPage() {
             />
           ))}
         </div>
-      </section>
-
-      <section>
-        <WebhookSection
-          webhooks={webhooks}
-          isLoading={webhooksLoading}
-          onAdd={handleAddWebhook}
-          onDelete={handleDeleteWebhook}
-          onTest={handleTestWebhook}
-          isPending={isPending}
-        />
       </section>
 
       <section>

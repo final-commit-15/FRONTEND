@@ -9,7 +9,7 @@ import type {
   TaskUpdatePayload,
 } from '@/types/api';
 
-// Re-export payload types for convenience (now exist in api.ts)
+// Re-export payload types for convenience
 export type { TaskCreatePayload, TaskUpdatePayload };
 
 export const tasksApi = {
@@ -24,12 +24,12 @@ export const tasksApi = {
   },
 
   create: async (payload: TaskCreatePayload): Promise<Task> => {
-    const { data } = await apiClient.post<Task>('/tasks', payload);
+    const { data } = await apiClient.post<Task>('/tasks', { ...payload, title: payload.title });
     return data;
   },
 
   update: async (id: string, payload: TaskUpdatePayload): Promise<Task> => {
-    const { data } = await apiClient.put<Task>(`/tasks/${id}`, payload);
+    const { data } = await apiClient.patch<Task>(`/tasks/${id}`, payload);
     return data;
   },
 

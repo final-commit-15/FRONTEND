@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/Button';
@@ -39,6 +39,7 @@ export function AgentForm({ initialData, mode, agentId }: AgentFormProps) {
 
   const {
     register,
+    control,
     handleSubmit,
     watch,
     setValue,
@@ -128,7 +129,7 @@ export function AgentForm({ initialData, mode, agentId }: AgentFormProps) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       <section className="card p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Identity</h2>
+        <h2 className="text-lg font-semibold text-text-heading mb-4">Identity</h2>
         <div className="space-y-4">
           <div>
             <Input label="Agent Name" {...register('name')} placeholder="e.g., Code Helper" error={errors.name?.message} />
@@ -138,25 +139,39 @@ export function AgentForm({ initialData, mode, agentId }: AgentFormProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Select label="Type" {...register('type')} error={errors.type?.message}>
-                <option value="coding">Coding</option>
-                <option value="automation">Automation</option>
-                <option value="data">Data</option>
-                <option value="research">Research</option>
-              </Select>
+              <Controller
+                name="type"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select label="Type" value={field.value} onChange={field.onChange} error={errors.type?.message}>
+                    <option value="coding">Coding</option>
+                    <option value="automation">Automation</option>
+                    <option value="data">Data</option>
+                    <option value="research">Research</option>
+                  </Select>
+                )}
+              />
             </div>
             <div>
-              <Select label="Status" {...register('status')} error={errors.status?.message}>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </Select>
+              <Controller
+                name="status"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select label="Status" value={field.value} onChange={field.onChange} error={errors.status?.message}>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </Select>
+                )}
+              />
             </div>
           </div>
         </div>
       </section>
 
       <section className="card p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Capabilities</h2>
+        <h2 className="text-lg font-semibold text-text-heading mb-4">Capabilities</h2>
         <div className="space-y-3">
           {capabilities.map((capability, index) => (
             <div key={index} className="flex gap-2">
@@ -179,18 +194,18 @@ export function AgentForm({ initialData, mode, agentId }: AgentFormProps) {
 
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Tools</h2>
-          <p className="text-sm text-base-500">Tools can be managed in the Tools section.</p>
+          <h2 className="text-lg font-semibold text-text-heading mb-4">Tools</h2>
+          <p className="text-sm text-text-muted">Tools can be managed in the Tools section.</p>
         </div>
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Permissions</h2>
-          <p className="text-sm text-base-500">Permissions can be managed in the Permissions section.</p>
+          <h2 className="text-lg font-semibold text-text-heading mb-4">Permissions</h2>
+          <p className="text-sm text-text-muted">Permissions can be managed in the Permissions section.</p>
         </div>
       </section>
 
       <section className="card p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Advanced Configuration</h2>
-        <p className="text-sm text-base-500">Advanced configuration options coming soon.</p>
+        <h2 className="text-lg font-semibold text-text-heading mb-4">Advanced Configuration</h2>
+        <p className="text-sm text-text-muted">Advanced configuration options coming soon.</p>
       </section>
 
       <div className="flex justify-end gap-2">

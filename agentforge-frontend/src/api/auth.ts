@@ -5,6 +5,7 @@ import type {
   RegisterRequest,
 } from '@/types/api';
 import type { User } from '@/types/models';
+import { useAuthStore } from '@/store/authStore';
 
 export const authApi = {
   login: async (credentials: LoginRequest) => {
@@ -16,6 +17,9 @@ export const authApi = {
         credentials
       );
 
+      // Store tokens in auth store
+      useAuthStore.getState().setTokens(tokens);
+      
       apiClient.defaults.headers.common.Authorization =
         `Bearer ${tokens.access_token}`;
 
@@ -62,6 +66,9 @@ export const authApi = {
     } catch (error) {
       console.error('Logout error:', error);
       // Don't throw on logout
+    } finally {
+      useAuthStore.getState().logout();
+      delete apiClient.defaults.headers.common.Authorization;
     }
   },
 };

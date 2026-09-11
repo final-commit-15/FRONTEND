@@ -1,8 +1,8 @@
 // src/types/api.ts
 // Re-export domain models for convenience
-// Explicit import + re-export
 import type { Agent, Execution, Task, User, AgentStatus, TaskStatus, ExecutionStatus } from './models';
 export type { Agent, Execution, Task, User, AgentStatus, TaskStatus, ExecutionStatus };
+
 // ─── Common API infrastructure ───────────────────────────────
 
 export interface ApiError {
@@ -53,10 +53,8 @@ export interface AgentListParams {
   page?: number;
 }
 
-// Using generic PaginatedResponse
 export type AgentListResponse = PaginatedResponse<Agent>;
 
-// Payloads for create/update – these match what AgentForm submits
 export interface CreateAgentRequest {
   name: string;
   description?: string;
@@ -70,7 +68,6 @@ export interface CreateAgentRequest {
 
 export type UpdateAgentRequest = Partial<CreateAgentRequest>;
 
-// Alias for the existing AgentCreatePayload used in the API client
 export type AgentCreatePayload = CreateAgentRequest;
 export type AgentUpdatePayload = UpdateAgentRequest;
 
@@ -115,7 +112,7 @@ export interface ExecuteAgentRequest {
   input?: Record<string, unknown>;
 }
 
-// ─── Analytics & Activity ────────────────────────────────────
+// ─── Analytics & Activity ─────────────────────────────────────
 
 export interface AnalyticsOverview {
   total_agents: number;
@@ -172,7 +169,7 @@ export interface SystemHealth {
   timestamp: string;
 }
 
-// ─── Tools & Permissions (auxiliary) ────────────────────────
+// ─── Tools & Permissions (auxiliary) ─────────────────────────
 
 export interface Tool {
   id: string;
@@ -192,7 +189,7 @@ export interface Permission {
   associated_agent?: string;
 }
 
-// ─── Settings ────────────────────────────────────────────────
+// ─── Settings ──────────────────────────────────────────────────
 
 export interface Settings {
   user: User;
@@ -213,8 +210,6 @@ export interface Settings {
   };
 }
 
-// ─── Settings sub‑types ────────────────────────────────────────
-
 export interface UserPreferences {
   theme: 'dark' | 'light';
   notifications_enabled: boolean;
@@ -233,12 +228,491 @@ export interface SystemSettings {
   retention_days: number;
 }
 
-// ─── Task payloads ────────────────────────────────────────────
+// ─── Task payloads ─────────────────────────────────────────────
 
 export interface TaskCreatePayload {
-  name: string;
+  title: string;
   description?: string;
   assigned_agent_id?: string;
 }
 
 export type TaskUpdatePayload = Partial<TaskCreatePayload>;
+
+// ─── Team Members & Invitations ────────────────────────────────
+
+export type TeamMemberRole = 
+  // Engineering
+  | 'frontend_web_developer'
+  | 'backend_web_developer'
+  | 'full_stack_developer'
+  | 'mobile_app_developer'
+  | 'android_developer'
+  | 'ios_developer'
+  | 'devops_engineer'
+  | 'cloud_engineer'
+  | 'ai_ml_engineer'
+  | 'data_engineer'
+  // QA
+  | 'qa_engineer'
+  | 'manual_tester'
+  | 'automation_tester'
+  | 'performance_tester'
+  // Product
+  | 'project_manager'
+  | 'product_manager'
+  | 'scrum_master'
+  | 'business_analyst'
+  // Design
+  | 'ui_designer'
+  | 'ux_designer'
+  | 'ui_ux_designer'
+  | 'graphic_designer'
+  // Security
+  | 'security_engineer'
+  // Other
+  | 'technical_writer'
+  | 'support_engineer';
+
+export type TeamMemberStatus = 'invited' | 'accepted' | 'active' | 'offline';
+
+export interface TeamMemberBase {
+  email: string;
+  full_name: string;
+  role: TeamMemberRole;
+  department?: string;
+  avatar_url?: string;
+  github_username?: string;
+}
+
+export type TeamMemberCreate = TeamMemberBase;
+
+export interface TeamMemberUpdate {
+  full_name?: string;
+  role?: TeamMemberRole;
+  department?: string;
+  avatar_url?: string;
+  github_username?: string;
+  status?: TeamMemberStatus;
+}
+
+export interface TeamMemberOut extends TeamMemberBase {
+  id: string;
+  workspace_id: string;
+  user_id?: string;
+  role: TeamMemberRole;
+  status: TeamMemberStatus;
+  github_username?: string;
+  invited_at: string;
+  accepted_at?: string;
+  joined_at?: string;
+}
+
+export interface TeamMemberInvite {
+  email: string;
+  full_name: string;
+  role: TeamMemberRole;
+  department?: string;
+}
+
+export type InvitationStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
+
+export interface InvitationOut {
+  id: string;
+  workspace_id: string;
+  email: string;
+  full_name: string;
+  role: TeamMemberRole;
+  department: string;
+  invited_by: string;
+  status: InvitationStatus;
+  expires_at: string;
+  created_at: string;
+}
+
+// ─── Requirements ────────────────────────────────────────────
+
+export type RequirementSource = 'pdf' | 'docx' | 'txt' | 'markdown' | 'figma_url' | 'website_url' | 'github_repo_url' | 'screenshot';
+
+export type RequirementStatus = 'uploaded' | 'processing' | 'processed' | 'failed' | 'archived';
+
+export interface RequirementBase {
+  title: string;
+  description?: string;
+  source: RequirementSource;
+  source_url?: string;
+}
+
+export type RequirementCreate = RequirementBase;
+
+export interface RequirementUpdate {
+  title?: string;
+  description?: string;
+  status?: RequirementStatus;
+}
+
+export interface RequirementOut extends RequirementBase {
+  id: string;
+  workspace_id: string;
+  uploaded_by?: string;
+  status: RequirementStatus;
+  file_path?: string;
+  file_size?: number;
+  mime_type?: string;
+  extracted_text?: string;
+  ai_summary?: string;
+  ai_extracted_features: Array<Record<string, any>>;
+  created_at: string;
+  updated_at: string;
+}
+
+export type RequirementListResponse = PaginatedResponse<RequirementOut>;
+
+// ─── Features ────────────────────────────────────────────────
+
+export type FeatureStatus = 'draft' | 'planned' | 'in_progress' | 'in_review' | 'approved' | 'rejected' | 'completed' | 'archived';
+export type FeaturePriority = 'low' | 'medium' | 'high' | 'critical';
+
+export interface FeatureBase {
+  title: string;
+  description?: string;
+  epic?: string;
+  user_story?: string;
+  acceptance_criteria: string[];
+  technical_notes?: string;
+  priority: FeaturePriority;
+  estimated_complexity?: string;
+  estimated_story_points?: number;
+  parent_feature_id?: string;
+}
+
+export interface FeatureCreate extends FeatureBase {
+  requirement_id?: string;
+  assignee_id?: string;
+}
+
+export interface FeatureUpdate {
+  title?: string;
+  description?: string;
+  epic?: string;
+  user_story?: string;
+  acceptance_criteria?: string[];
+  technical_notes?: string;
+  status?: FeatureStatus;
+  priority?: FeaturePriority;
+  estimated_complexity?: string;
+  estimated_story_points?: number;
+  actual_story_points?: number;
+  assignee_id?: string;
+  parent_feature_id?: string;
+}
+
+export interface FeatureOut extends FeatureBase {
+  id: string;
+  workspace_id: string;
+  requirement_id?: string;
+  assignee_id?: string;
+  created_by: string;
+  feature_key: string;
+  status: FeatureStatus;
+  priority: FeaturePriority;
+  estimated_story_points?: number;
+  actual_story_points?: number;
+  parent_feature_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type FeatureListResponse = PaginatedResponse<FeatureOut>;
+
+// ─── Sprints ────────────────────────────────────────────────
+
+export type SprintStatus = 'planned' | 'active' | 'paused' | 'completed' | 'archived';
+
+export interface SprintBase {
+  name: string;
+  goal?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export type SprintCreate = SprintBase;
+
+export interface SprintUpdate {
+  name?: string;
+  goal?: string;
+  start_date?: string;
+  end_date?: string;
+  status?: SprintStatus;
+  story_points_planned?: number;
+  story_points_completed?: number;
+}
+
+export interface SprintOut extends SprintBase {
+  id: string;
+  workspace_id: string;
+  status: SprintStatus;
+  story_points_planned: number;
+  story_points_completed: number;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SprintListResponse = PaginatedResponse<SprintOut>;
+
+export interface SprintAnalytics {
+  sprint_id: string;
+  completion_percentage: number;
+  total_story_points: number;
+  completed_story_points: number;
+  velocity: number;
+  completed_tasks: number;
+  total_tasks: number;
+  bugs_discovered: number;
+  bugs_resolved: number;
+  prs_reviewed: number;
+  team_workload: Record<string, number>;
+}
+
+// ─── Sprint Notes ────────────────────────────────────────────
+
+export type SprintNoteAuthorType = 'manager' | 'ai_agent';
+
+export interface SprintNoteBase {
+  date: string;
+  author_type: SprintNoteAuthorType;
+  completed_work?: string;
+  in_progress?: string;
+  blockers?: string;
+  decisions?: string;
+  notes?: string;
+  pinned?: boolean;
+}
+
+export interface SprintNoteCreate extends SprintNoteBase {
+  sprint_id: string;
+  author_id?: string;
+}
+
+export interface SprintNoteUpdate {
+  completed_work?: string;
+  in_progress?: string;
+  blockers?: string;
+  decisions?: string;
+  notes?: string;
+}
+
+export interface SprintNoteOut extends SprintNoteBase {
+  id: string;
+  sprint_id: string;
+  author_type: SprintNoteAuthorType;
+  author_id?: string;
+  ai_generated: boolean;
+  ai_source_data: Record<string, any>;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SprintNoteListResponse = PaginatedResponse<SprintNoteOut>;
+
+export interface SprintNoteTaskLinkCreate {
+  sprint_note_id: string;
+  task_id: string;
+}
+
+export interface SprintNoteFeatureLinkCreate {
+  sprint_note_id: string;
+  feature_id: string;
+}
+
+// ─── Blockers ────────────────────────────────────────────────
+
+export type BlockerStatus = 'open' | 'in_progress' | 'resolved' | 'wont_fix';
+export type BlockerPriority = 'low' | 'medium' | 'high' | 'critical';
+
+export interface BlockerBase {
+  title: string;
+  description?: string;
+  priority: BlockerPriority;
+}
+
+export interface BlockerCreate extends BlockerBase {
+  sprint_id?: string;
+  owner_id: string;
+  related_feature_id?: string;
+  related_task_id?: string;
+}
+
+export interface BlockerUpdate {
+  title?: string;
+  description?: string;
+  priority?: BlockerPriority;
+  status?: BlockerStatus;
+  owner_id?: string;
+  related_feature_id?: string;
+  related_task_id?: string;
+  resolved_at?: string;
+  resolved_by?: string;
+}
+
+export interface BlockerOut extends BlockerBase {
+  id: string;
+  workspace_id: string;
+  sprint_id?: string;
+  owner_id: string;
+  status: BlockerStatus;
+  priority: BlockerPriority;
+  related_feature_id?: string;
+  related_task_id?: string;
+  resolved_at?: string;
+  resolved_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Decisions ────────────────────────────────────────────────
+
+export interface DecisionBase {
+  title: string;
+  description: string;
+  reason: string;
+  impact?: string;
+}
+
+export interface DecisionCreate extends DecisionBase {
+  sprint_id?: string;
+}
+
+export interface DecisionOut extends DecisionBase {
+  id: string;
+  workspace_id: string;
+  sprint_id?: string;
+  date: string;
+  made_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// ─── Dashboard Types ────────────────────────────────────────────
+
+export interface DashboardKPIs {
+  active_projects: number;
+  active_sprint: { id: string; name: string; completion: number } | null;
+  sprint_completion: number;
+  story_points_total: number;
+  story_points_completed: number;
+  features_completed: number;
+  tasks_completed: number;
+  tasks_pending_review: number;
+  open_blockers: number;
+  pending_qa: number;
+  kb_documents: number;
+}
+
+export interface SprintProgress {
+  sprint_id: string;
+  sprint_name: string;
+  completion: number;
+  story_points_total: number;
+  story_points_completed: number;
+  days_remaining: number;
+  status: 'healthy' | 'at_risk' | 'delayed';
+  velocity: number;
+  burndown: { date: string; remaining: number; ideal: number }[];
+}
+
+export interface TeamWorkload {
+  member_id: string;
+  member_name: string;
+  avatar_url?: string;
+  department: string;
+  assigned_tasks: number;
+  completed_tasks: number;
+  in_progress_tasks: number;
+  workload_percentage: number;
+  status: 'underloaded' | 'balanced' | 'overloaded';
+}
+
+export interface TaskStatusSummary {
+  pending: number;
+  in_progress: number;
+  in_review: number;
+  completed: number;
+  blocked: number;
+  total: number;
+}
+
+export interface FeatureStatusSummary {
+  planned: number;
+  in_progress: number;
+  in_review: number;
+  completed: number;
+  archived: number;
+  total: number;
+}
+
+export interface PendingPRs {
+  total: number;
+  by_status: Record<string, number>;
+  by_repository: Record<string, number>;
+  prs: {
+    id: string;
+    number: number;
+    title: string;
+    repository: string;
+    branch: string;
+    author: string;
+    feature_id?: string;
+    task_id?: string;
+    ai_recommendation?: 'approve' | 'reject' | 'needs_changes';
+    status: string;
+    updated_at: string;
+  }[];
+}
+
+export interface AIActivitySummary {
+  total_runs: number;
+  successful: number;
+  failed: number;
+  agents_active: number;
+  last_run: string;
+  summary: string;
+  top_agents: { name: string; runs: number; success_rate: number }[];
+}
+
+export interface RecentActivity {
+  id: string;
+  type: 'requirement' | 'feature' | 'task' | 'sprint' | 'note' | 'blocker' | 'decision' | 'pr' | 'qa';
+  title: string;
+  description?: string;
+  user_name: string;
+  user_avatar?: string;
+  timestamp: string;
+  entity_id?: string;
+  entity_type?: string;
+}
+
+export interface UpcomingDeadline {
+  id: string;
+  type: 'sprint' | 'feature' | 'task' | 'review';
+  title: string;
+  due_date: string;
+  days_remaining: number;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface RecentDecision {
+  id: string;
+  title: string;
+  description: string;
+  made_by: string;
+  date: string;
+  sprint_name?: string;
+}
+
+export interface BlockerSummary {
+  total: number;
+  by_status: Record<string, number>;
+  by_priority: Record<string, number>;
+  oldest_open: { id: string; title: string; days_open: number } | null;
+}

@@ -86,7 +86,7 @@ export function TaskDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
-        title={task.name}
+        title={task.title}
         description="Task details and execution history"
       />
 

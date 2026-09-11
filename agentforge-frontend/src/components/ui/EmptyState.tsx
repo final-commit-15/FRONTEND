@@ -7,16 +7,22 @@ interface EmptyStateProps {
   title: string;
   description?: string;
   action?: React.ReactNode;
+  onRetry?: () => void;
   className?: string;
 }
 
-export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, action, onRetry, className }: EmptyStateProps) {
   return (
     <div className={cn('empty-state', className)}>
       {icon && <div className="empty-state-icon text-text-muted/50">{icon}</div>}
       <h3 className="empty-state-title">{title}</h3>
       {description && <p className="empty-state-description">{description}</p>}
       {action && <div className="mt-6">{action}</div>}
+      {onRetry && (
+        <Button variant="outline" className="mt-4" onClick={onRetry}>
+          Try Again
+        </Button>
+      )}
     </div>
   );
 }

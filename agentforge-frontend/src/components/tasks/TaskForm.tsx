@@ -1,7 +1,7 @@
 // src/components/tasks/TaskForm.tsx
 
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/useToast';
 import { Task, Agent } from '@/types/models';
 
 const taskSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  title: z.string().min(2, 'Title must be at least 2 characters'),
   description: z.string().max(1000).optional(),
   assigned_agent_id: z.string().optional(),
 });
@@ -45,16 +45,16 @@ export function TaskForm({ initialData, mode, taskId }: TaskFormProps) {
   // Safely extract agents array
   const agents: Agent[] = agentsData?.items ?? [];
 
-  const { register, handleSubmit, formState: { errors } } = useForm<TaskFormData>({
+  const { register, control, handleSubmit, formState: { errors } } = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
     defaultValues: initialData
       ? {
-          name: initialData.name,
+          title: initialData.title,
           description: initialData.description || '',
           assigned_agent_id: initialData.assigned_agent_id || '',
         }
       : {
-          name: '',
+          title: '',
           description: '',
           assigned_agent_id: '',
         },
@@ -71,7 +71,7 @@ export function TaskForm({ initialData, mode, taskId }: TaskFormProps) {
       addToast({
         type: 'success',
         title: mode === 'create' ? 'Task created' : 'Task updated',
-        description: `${data.name} has been ${mode === 'create' ? 'created' : 'updated'} successfully.`,
+        description: `${data.title} has been ${mode === 'create' ? 'created' : 'updated'} successfully.`,
       });
       navigate(`/tasks/${data.id}`);
     },
@@ -93,10 +93,10 @@ export function TaskForm({ initialData, mode, taskId }: TaskFormProps) {
       <div className="card p-6 space-y-4">
         <h2 className="text-lg font-semibold text-white">Task Details</h2>
         <Input
-          label="Task Name"
-          {...register('name')}
+          label="Task Title"
+          {...register('title')}
           placeholder="e.g., Generate weekly report"
-          error={errors.name?.message}
+          error={errors.title?.message}
         />
         <Textarea
           label="Description"
@@ -105,18 +105,26 @@ export function TaskForm({ initialData, mode, taskId }: TaskFormProps) {
           placeholder="Describe the task..."
           error={errors.description?.message}
         />
-        <Select
-          label="Assigned Agent (optional)"
-          {...register('assigned_agent_id')}
-          error={errors.assigned_agent_id?.message}
-        >
-          <option value="">No agent</option>
-          {agents.map((agent) => (
-            <option key={agent.id} value={agent.id}>
-              {agent.name}
-            </option>
-          ))}
-        </Select>
+        <Controller
+          name="assigned_agent_id"
+          control={control}
+          rules={{ required: false }}
+          render={({ field }) => (
+            <Select
+              label="Assigned Agent (optional)"
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.assigned_agent_id?.message}
+            >
+              <option value="">No agent</option>
+              {agents.map((agent) => (
+                <option key={agent.id} value={agent.id}>
+                  {agent.name}
+                </option>
+              ))}
+            </Select>
+          )}
+        />
       </div>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="secondary" onClick={() => navigate(-1)}>

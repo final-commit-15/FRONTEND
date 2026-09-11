@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1a1a2e" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#050508" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 
     <!-- Primary Meta Tags -->
@@ -46,7 +46,7 @@
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#1a1a2e" />
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#6366f1" />
 
     <!-- Preconnect to API domain -->
     <link rel="preconnect" href="https://api.agentforge.example.com" crossorigin />
@@ -59,6 +59,22 @@
 
     <!-- Sitemap & Robots -->
     <link rel="sitemap" href="/sitemap.xml" />
+
+    <!-- Theme bootstrap: avoid FOUC, default dark -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var theme = stored === 'light' || stored === 'dark' ? stored : prefersDark ? 'dark' : 'light';
+          document.documentElement.classList.toggle('dark', theme === 'dark');
+          document.documentElement.classList.toggle('light', theme === 'light');
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

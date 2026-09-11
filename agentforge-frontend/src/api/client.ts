@@ -8,9 +8,9 @@ const getApiBaseUrl = (): string => {
     return envUrl.replace(/\/$/, '');
   }
   if (import.meta.env.PROD) {
-    return 'https://api.agentforge.example.com/api/v1';
+    return 'https://api.agentforge.example.com';
   }
-  return '/api/v1';
+  return 'http://localhost:8000';
 };
 
 const API_BASE_URL = getApiBaseUrl();

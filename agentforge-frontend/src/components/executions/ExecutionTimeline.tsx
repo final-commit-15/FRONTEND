@@ -15,17 +15,17 @@ export function ExecutionTimeline({ execution }: ExecutionTimelineProps) {
   if (steps.length === 0) {
     return (
       <div className="card p-6">
-        <h3 className="text-lg font-semibold text-white mb-6">Execution Timeline</h3>
-        <p className="text-base-500">No timeline steps available.</p>
+        <h3 className="text-lg font-semibold text-text-heading mb-6">Execution Timeline</h3>
+        <p className="text-text-muted">No timeline steps available.</p>
       </div>
     );
   }
 
   return (
     <div className="card p-6">
-      <h3 className="text-lg font-semibold text-white mb-6">Execution Timeline</h3>
+      <h3 className="text-lg font-semibold text-text-heading mb-6">Execution Timeline</h3>
       <div className="relative">
-        <div className="absolute left-4 top-0 bottom-0 w-px bg-base-800" />
+        <div className="absolute left-4 top-0 bottom-0 w-px bg-canvas-border" />
         <div className="space-y-6">
           {steps.map((step) => (
             <div key={step.id} className="relative flex items-start gap-4">
@@ -36,8 +36,8 @@ export function ExecutionTimeline({ execution }: ExecutionTimelineProps) {
                   </div>
                 )}
                 {step.status === 'active' && (
-                  <div className="w-8 h-8 rounded-full bg-electric-600/20 border border-electric-500 flex items-center justify-center animate-glow">
-                    <Loader2 size={16} className="text-electric-400 animate-spin" />
+                  <div className="w-8 h-8 rounded-full bg-brand-primary/20 border border-brand-primary flex items-center justify-center animate-glow">
+                    <Loader2 size={16} className="text-brand-secondary animate-spin" />
                   </div>
                 )}
                 {step.status === 'failed' && (
@@ -46,8 +46,8 @@ export function ExecutionTimeline({ execution }: ExecutionTimelineProps) {
                   </div>
                 )}
                 {step.status === 'pending' && (
-                  <div className="w-8 h-8 rounded-full bg-base-800 border border-base-700 flex items-center justify-center">
-                    <Clock size={16} className="text-base-500" />
+                  <div className="w-8 h-8 rounded-full bg-bg-tertiary border border-canvas-border flex items-center justify-center">
+                    <Clock size={16} className="text-text-muted" />
                   </div>
                 )}
               </div>
@@ -56,19 +56,19 @@ export function ExecutionTimeline({ execution }: ExecutionTimelineProps) {
                 <div className="flex items-center justify-between">
                   <p className={cn(
                     'font-medium',
-                    step.status === 'failed' ? 'text-error-500' : 'text-white'
+                    step.status === 'failed' ? 'text-error-500' : 'text-text-heading'
                   )}>
                     {step.label}
                   </p>
                   {step.timestamp && (
-                    <span className="text-xs text-base-500">{formatDateTime(step.timestamp)}</span>
+                    <span className="text-xs text-text-muted">{formatDateTime(step.timestamp)}</span>
                   )}
                 </div>
                 {step.duration && (
-                  <p className="text-xs text-base-500 mt-1">Duration: {formatDuration(step.duration)}</p>
+                  <p className="text-xs text-text-muted mt-1">Duration: {formatDuration(step.duration)}</p>
                 )}
                 {step.metadata && Object.keys(step.metadata).length > 0 && (
-                  <div className="mt-2 p-3 bg-base-800/50 rounded-lg text-xs text-base-400">
+                  <div className="mt-2 p-3 bg-bg-tertiary rounded-lg text-xs text-text-body border border-canvas-border">
                     {Object.entries(step.metadata).map(([key, value]) => (
                       <div key={key} className="flex justify-between py-0.5">
                         <span>{key}:</span>

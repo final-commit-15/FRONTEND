@@ -5,54 +5,104 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Brand colors
+        // Brand colors - exact exported palette via CSS variables
         brand: {
-          primary: '#0084FF',
-          'primary-hover': '#0074E0',
-          'primary-dark': '#0066CC',
+          primary: 'var(--brand-primary)',
+          'primary-hover': 'var(--brand-primary-hover)',
+          'primary-dark': 'var(--brand-primary-dark)',
+          secondary: 'var(--brand-secondary)',
         },
-        // Canvas colors (white-first interface)
+        // Canvas colors (theme-aware) — pitch-black dark / white light
         canvas: {
-          DEFAULT: '#FFFFFF',
-          surface: 'rgba(255, 255, 255, 0.72)',
-          'glass': 'rgba(255, 255, 255, 0.55)',
-          border: 'rgba(255, 255, 255, 0.70)',
+          DEFAULT: 'var(--bg-primary)',
+          surface: 'var(--bg-surface)',
+          card: 'var(--bg-card)',
+          glass: 'var(--bg-glass)',
+          border: 'var(--border-primary)',
+          'border-secondary': 'var(--border-secondary)',
         },
-        // Text colors
+        bg: {
+          primary: 'var(--bg-primary)',
+          secondary: 'var(--bg-secondary)',
+          tertiary: 'var(--bg-tertiary)',
+        },
+        // Text colors — high-contrast in both themes
         text: {
-          heading: '#171717',
-          body: '#6B7280',
-          muted: '#9CA3AF',
-          inverse: '#FFFFFF',
+          heading: 'var(--text-primary)',
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          body: 'var(--text-body)',
+          muted: 'var(--text-muted)',
+          inverse: 'var(--bg-primary)',
         },
-        // Status colors (updated to work on light backgrounds)
+        // Signature amber accent
+        accent: {
+          amber: 'var(--accent-amber)',
+          'amber-strong': 'var(--accent-amber-strong)',
+          headline1: 'var(--headline-1)',
+          headline2: 'var(--headline-2)',
+          headline3: 'var(--headline-3)',
+        },
+        // Status colors — contrast-safe text variants included
         success: {
-          50: '#ECFDF5',
-          100: '#D1FAE5',
-          500: '#10B981',
-          600: '#059669',
-          700: '#047857',
+          50: 'var(--success-bg)',
+          100: 'var(--success-bg)',
+          500: 'var(--success)',
+          600: 'var(--success-text)',
+          700: 'var(--success-text)',
         },
         warning: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          500: '#F59E0B',
-          600: '#D97706',
-          700: '#B45309',
+          50: 'var(--warning-bg)',
+          100: 'var(--warning-bg)',
+          500: 'var(--warning)',
+          600: 'var(--warning-text)',
+          700: 'var(--warning-text)',
         },
         error: {
-          50: '#FEF2F2',
-          100: '#FEE2E2',
-          500: '#EF4444',
-          600: '#DC2626',
-          700: '#B91C1C',
+          50: 'var(--error-bg)',
+          100: 'var(--error-bg)',
+          500: 'var(--error)',
+          600: 'var(--error-text)',
+          700: 'var(--error-text)',
         },
         info: {
-          50: '#EFF6FF',
-          100: '#DBEAFE',
-          500: '#3B82F6',
-          600: '#2563EB',
-          700: '#1D4ED8',
+          50: 'var(--info-bg)',
+          100: 'var(--info-bg)',
+          500: 'var(--info)',
+          600: 'var(--info-text)',
+          700: 'var(--info-text)',
+        },
+        // Agent dots
+        agent: {
+          warm: 'var(--agent-warm)',
+          sky: 'var(--agent-sky)',
+          emerald: 'var(--agent-emerald)',
+        },
+        // Integration brand colors (theme-aware)
+        integration: {
+          slack: 'var(--integration-slack)',
+          jira: 'var(--integration-jira)',
+          calendar: 'var(--integration-calendar)',
+          github: 'var(--integration-github)',
+          notion: 'var(--integration-notion)',
+        },
+        // Legacy aliases — old `base-*` / `electric-*` classes found across
+        // components now resolve to theme-aware tokens instead of nothing.
+        // No API/logic change; purely keeps legacy markup readable.
+        base: {
+          300: 'var(--text-muted)',
+          400: 'var(--text-muted)',
+          500: 'var(--text-muted)',
+          600: 'var(--border-secondary)',
+          700: 'var(--border-primary)',
+          800: 'var(--bg-tertiary)',
+          900: 'var(--bg-secondary)',
+          950: 'var(--bg-primary)',
+        },
+        electric: {
+          400: 'var(--brand-secondary)',
+          500: 'var(--brand-primary)',
+          600: 'var(--brand-primary-dark)',
         },
       },
       fontFamily: {
@@ -62,11 +112,9 @@ export default {
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       spacing: {
-        // Page container paddings
         'page-desktop': '80px',
         'page-tablet': '48px',
         'page-mobile': '24px',
-        // Section spacing
         'section-sm': '72px',
         'section-lg': '96px',
       },
@@ -84,8 +132,20 @@ export default {
         'glass-hover': '0 12px 40px rgba(0, 0, 0, 0.12)',
         'card': '0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)',
         'card-hover': '0 10px 25px rgba(0, 0, 0, 0.08), 0 4px 10px rgba(0, 0, 0, 0.04)',
-        'glow-blue': '0 0 30px rgba(0, 132, 255, 0.15)',
-        'glow-blue-hover': '0 0 40px rgba(0, 132, 255, 0.25)',
+        'glow-blue': '0 0 30px var(--glow-blue)',
+        'glow-blue-hover': '0 0 40px var(--glow-blue)',
+        'glow-warm': '0 0 30px var(--glow-warm)',
+        'glow-warm-hover': '0 0 40px var(--glow-warm)',
+        'glow-green': '0 0 30px var(--glow-green)',
+        'glow-amber': '0 0 30px var(--glow-amber)',
+        'halo': '0 0 42px var(--glow-halo), 0 0 90px var(--glow-halo-soft)',
+        'halo-strong': '0 0 60px var(--glow-halo-strong), 0 0 120px var(--glow-halo-soft)',
+        'robo': 'var(--robo-shadow)',
+      },
+      backgroundImage: {
+        'headline-gradient': 'linear-gradient(92deg, var(--headline-1), var(--headline-2) 52%, var(--headline-3))',
+        'orbit-line': 'linear-gradient(90deg, var(--orbit-from), var(--orbit-to))',
+        'visor-bloom': 'radial-gradient(circle, var(--visor-core) 0%, var(--visor-mid) 42%, transparent 72%)',
       },
       backdropBlur: {
         xs: '2px',
@@ -108,6 +168,7 @@ export default {
         'scale-in': 'scaleIn 0.2s ease-out',
         'shimmer': 'shimmer 2s linear infinite',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'glow-pulse': 'glowPulse 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -129,6 +190,10 @@ export default {
         shimmer: {
           '0%': { backgroundPosition: '-1000px 0' },
           '100%': { backgroundPosition: '1000px 0' },
+        },
+        glowPulse: {
+          '0%, 100%': { boxShadow: '0 0 20px var(--glow-warm)' },
+          '50%': { boxShadow: '0 0 40px var(--glow-warm)' },
         },
       },
     },

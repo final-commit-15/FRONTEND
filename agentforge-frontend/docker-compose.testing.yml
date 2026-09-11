@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  playwright:
+    build:
+      context: .
+      dockerfile: Dockerfile.playwright
+    container_name: agentforge-playwright
+    environment:
+      - BASE_URL=http://frontend:3000
+      - API_URL=http://backend:8000
+      - AI_URL=http://ai-services:8001
+      - TEST_EMAIL=test@agentforge.ai
+      - TEST_PASSWORD=password123
+      - ADMIN_EMAIL=admin@agentforge.ai
+      - ADMIN_PASSWORD=admin123
+      - VIEWER_EMAIL=viewer@agentforge.ai
+      - VIEWER_PASSWORD=viewer123
+      - NODE_ENV=test
+      - CI=true
+    volumes:
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+      - ./tests/.auth:/app/tests/.auth
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      ai-services:
+        condition: service_healthy
+    networks:
+      - agentforge-network
+    command: >
+      sh -c "
+        npx wait-on http://frontend:3000 http://backend:8000/health http://ai-services:8001/v1/health -t 120000 &&
+        npx playwright test
+      "
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: agentforge-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://backend:8000/api/v1
+      - VITE_APP_NAME=AgentForge
+      - VITE_NODE_ENV=test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - agentforge-network
+
+  backend:
+    build:
+      context: ../../agentforge-backend
+      dockerfile: Dockerfile
+    container_name: agentforge-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/agentforge
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=test-secret-key
+      - JWT_ALGORITHM=HS256
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - agentforge-network
+
+  ai-services:
+    build:
+      context: ../../agentforge-ai-services
+      dockerfile: Dockerfile
+    container_name: agentforge-ai-services
+    ports:
+      - "8001:8001"
+    environment:
+      - MODEL_PATH=/models
+      - HF_TOKEN=${HF_TOKEN}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - agentforge-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  db:
+    image: postgres:16-alpine
+    container_name: agentforge-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=agentforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agentforge-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: agentforge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agentforge-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  agentforge-network:
+    driver: bridge

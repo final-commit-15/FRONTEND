@@ -38,8 +38,8 @@ export const agentsApi = {
     await apiClient.delete(`/agents/${id}`);
   },
 
-  execute: async (id: string, taskId: string): Promise<Execution> => {
-    const { data } = await apiClient.post<Execution>(`/agents/${id}/execute`, { task_id: taskId });
+  execute: async (id: string, taskId?: string): Promise<Execution> => {
+    const { data } = await apiClient.post<Execution>(`/agents/${id}/execute`, taskId ? { task_id: taskId } : {});
     return data;
   },
 

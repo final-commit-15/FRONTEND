@@ -35,7 +35,7 @@ export function TaskFilters({
         <Select
           label="Status"
           value={statusFilter}
-          onChange={(e) => onStatusFilterChange(e.target.value as TaskStatus | 'all')}
+          onChange={(value) => onStatusFilterChange(value as TaskStatus | 'all')}
         >
           <option value="all">All</option>
           {TASK_STATUSES.map((status) => (
@@ -46,7 +46,7 @@ export function TaskFilters({
         </Select>
       </div>
       <div className="w-48">
-        <Select label="Sort By" value={sortBy} onChange={(e) => onSortChange(e.target.value)}>
+        <Select label="Sort By" value={sortBy} onChange={(value) => onSortChange(value)}>
           <option value="-created_at">Newest</option>
           <option value="created_at">Oldest</option>
           <option value="name">Name A-Z</option>

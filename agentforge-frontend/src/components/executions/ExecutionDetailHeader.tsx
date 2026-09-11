@@ -17,17 +17,17 @@ export function ExecutionDetailHeader({ execution, onRefresh, onRetry, onCancel 
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-electric-500/20 to-violet-500/20 flex items-center justify-center">
-          <TerminalSquare size={24} className="text-electric-400" />
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary/20 to-brand-secondary/20 flex items-center justify-center">
+          <TerminalSquare size={24} className="text-brand-secondary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white font-mono">{execution.id.slice(0, 8)}...</h1>
+          <h1 className="text-2xl font-bold text-text-heading font-mono">{execution.id.slice(0, 8)}...</h1>
           <div className="flex items-center gap-2 mt-1">
             <StatusBadge status={execution.status} />
-            <span className="text-base-600">•</span>
-            <span className="text-sm text-base-500">Started {formatDateTime(execution.started_at)}</span>
-            <span className="text-base-600">•</span>
-            <span className="text-sm text-base-500">Duration {formatDuration(execution.duration)}</span>
+            <span className="text-text-muted">•</span>
+            <span className="text-sm text-text-muted">Started {formatDateTime(execution.started_at)}</span>
+            <span className="text-text-muted">•</span>
+            <span className="text-sm text-text-muted">Duration {formatDuration(execution.duration)}</span>
           </div>
         </div>
       </div>

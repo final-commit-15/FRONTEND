@@ -1,0 +1,521 @@
+name: Playwright E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      testSuite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - smoke
+          - auth
+          - dashboard
+          - chat
+          - workflows
+          - agents
+          - integrations
+          - billing
+          - settings
+          - admin
+          - api
+          - ai-services
+          - visual
+          - accessibility
+          - performance
+      browser:
+        description: 'Browser to run tests on'
+        required: false
+        default: 'chromium'
+        type: choice
+        options:
+          - chromium
+          - firefox
+          - webkit
+          - all
+
+env:
+  NODE_VERSION: '20.x'
+  NPM_VERSION: '10.x'
+
+jobs:
+  install-and-build:
+    name: Install & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Build application
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_APP_NAME: ${{ secrets.VITE_APP_NAME }}
+          VITE_APP_VERSION: ${{ secrets.VITE_APP_VERSION }}
+          VITE_NODE_ENV: production
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+
+      - name: Upload node_modules cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+          retention-days: 7
+
+  test-smoke:
+    name: Smoke Tests
+    needs: install-and-build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.testSuite == 'all' || github.event.inputs.testSuite == 'smoke' || github.event_name != 'workflow_dispatch'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Start services
+        run: docker compose -f docker-compose.testing.yml up -d frontend backend ai-services db redis
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Wait for services
+        run: |
+          npx wait-on http://localhost:3000 http://localhost:8000/health http://localhost:8001/v1/health -t 120000
+
+      - name: Run smoke tests
+        run: npx playwright test tests/smoke --project=chromium
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL: http://localhost:8000
+          AI_URL: http://localhost:8001
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+
+      - name: Upload smoke test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.testing.yml down -v
+
+  test-e2e:
+    name: E2E Tests (${{ matrix.browser }})
+    needs: install-and-build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.testSuite == 'all' || github.event.inputs.testSuite != 'smoke'
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        include:
+          - browser: chromium
+          - browser: firefox
+          - browser: webkit
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Start services
+        run: docker compose -f docker-compose.testing.yml up -d frontend backend ai-services db redis
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Wait for services
+        run: |
+          npx wait-on http://localhost:3000 http://localhost:8000/health http://localhost:8001/v1/health -t 120000
+
+      - name: Run E2E tests on ${{ matrix.browser }}
+        run: npx playwright test --project=${{ matrix.browser }}
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL: http://localhost:8000
+          AI_URL: http://localhost:8001
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results-${{ matrix.browser }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traces-${{ matrix.browser }}
+          path: test-results/**/*.trace.zip
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.testing.yml down -v
+
+  test-visual:
+    name: Visual Regression Tests
+    needs: install-and-build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.testSuite == 'all' || github.event.inputs.testSuite == 'visual'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Start services
+        run: docker compose -f docker-compose.testing.yml up -d frontend backend ai-services db redis
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Wait for services
+        run: |
+          npx wait-on http://localhost:3000 http://localhost:8000/health http://localhost:8001/v1/health -t 120000
+
+      - name: Run visual tests
+        run: npx playwright test tests/visual --project=chromium --update-snapshots
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL: http://localhost:8000
+          AI_URL: http://localhost:8001
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          UPDATE_SNAPSHOTS: true
+
+      - name: Upload visual test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-test-results
+          path: |
+            test-results/
+            playwright-report/
+            tests/visual/snapshots/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.testing.yml down -v
+
+  test-accessibility:
+    name: Accessibility Tests
+    needs: install-and-build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.testSuite == 'all' || github.event.inputs.testSuite == 'accessibility'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Start services
+        run: docker compose -f docker-compose.testing.yml up -d frontend backend ai-services db redis
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Wait for services
+        run: |
+          npx wait-on http://localhost:3000 http://localhost:8000/health http://localhost:8001/v1/health -t 120000
+
+      - name: Run accessibility tests
+        run: npx playwright test tests/accessibility --project=chromium
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL: http://localhost:8000
+          AI_URL: http://localhost:8001
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+
+      - name: Upload accessibility results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.testing.yml down -v
+
+  test-performance:
+    name: Performance Tests
+    needs: install-and-build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.testSuite == 'all' || github.event.inputs.testSuite == 'performance'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Start services
+        run: docker compose -f docker-compose.testing.yml up -d frontend backend ai-services db redis
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Wait for services
+        run: |
+          npx wait-on http://localhost:3000 http://localhost:8000/health http://localhost:8001/v1/health -t 120000
+
+      - name: Run performance tests
+        run: npx playwright test tests/performance --project=chromium
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL: http://localhost:8000
+          AI_URL: http://localhost:8001
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+
+      - name: Upload performance results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.testing.yml down -v
+
+  test-api:
+    name: API Tests
+    needs: install-and-build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.testSuite == 'all' || github.event.inputs.testSuite == 'api'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+
+      - name: Start backend services
+        run: docker compose -f docker-compose.testing.yml up -d backend db redis
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Wait for backend
+        run: npx wait-on http://localhost:8000/health -t 60000
+
+      - name: Run API tests
+        run: npx playwright test tests/api --project=api
+        env:
+          API_URL: http://localhost:8000
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+
+      - name: Upload API test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.testing.yml down -v
+
+  test-ai-services:
+    name: AI Services Tests
+    needs: install-and-build
+    runs-on: ubuntu-latest
+    if: github.event.inputs.testSuite == 'all' || github.event.inputs.testSuite == 'ai-services'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download node_modules
+        uses: actions/download-artifact@v4
+        with:
+          name: node_modules
+          path: node_modules
+
+      - name: Start AI services
+        run: docker compose -f docker-compose.testing.yml up -d ai-services
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - name: Wait for AI services
+        run: npx wait-on http://localhost:8001/v1/health -t 60000
+
+      - name: Run AI services tests
+        run: npx playwright test tests/ai-services --project=ai-services
+        env:
+          AI_URL: http://localhost:8001
+
+      - name: Upload AI services test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-services-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: Cleanup
+        if: always()
+        run: docker compose -f docker-compose.testing.yml down -v
+
+  notify:
+    name: Notify
+    needs: [test-smoke, test-e2e, test-visual, test-accessibility, test-performance, test-api, test-ai-services]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.test-smoke.result }}" == "failure" ] || \
+             [ "${{ needs.test-e2e.result }}" == "failure" ] || \
+             [ "${{ needs.test-visual.result }}" == "failure" ] || \
+             [ "${{ needs.test-accessibility.result }}" == "failure" ] || \
+             [ "${{ needs.test-performance.result }}" == "failure" ] || \
+             [ "${{ needs.test-api.result }}" == "failure" ] || \
+             [ "${{ needs.test-ai-services.result }}" == "failure" ]; then
+            echo "Some tests failed"
+            exit 1
+          else
+            echo "All tests passed"
+          fi

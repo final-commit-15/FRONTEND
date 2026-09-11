@@ -6,6 +6,7 @@ export interface User {
   role: "admin" | "developer" | "operator" | "user" | "viewer";
   is_active: boolean;
   is_verified: boolean;
+  avatar_url?: string;
   created_at?: string;
 }
 
@@ -20,11 +21,20 @@ export interface Agent {
   name: string;
   description?: string;
   type: string;
+  agent_type?: string;
   status: AgentStatus;
   capabilities: string[];
   tools?: string[];
   permissions?: string[];
   configuration?: Record<string, any>;
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
+  memory?: Record<string, any>;
+  execution_limits?: Record<string, any>;
+  timeout_seconds?: number;
+  retry_policy?: Record<string, any>;
+  project_id?: string;
   execution_count: number;
   success_rate: number;
   avg_duration: number;
@@ -37,7 +47,8 @@ export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cance
 
 export interface Task {
   id: string;
-  name: string;
+  title: string;
+  name: string; // Deprecated: use title
   description?: string;
   status: TaskStatus;
   assigned_agent_id?: string;

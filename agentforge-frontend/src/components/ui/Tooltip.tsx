@@ -1,77 +1,33 @@
 import React from 'react';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../../lib/utils';
 
-interface TooltipProps {
-  content: React.ReactNode;
-  children: React.ReactElement;
-  side?: 'top' | 'bottom' | 'left' | 'right';
-  align?: 'start' | 'center' | 'end';
-  delay?: number;
-}
+const TooltipProvider = TooltipPrimitive.Provider;
+const Tooltip = TooltipPrimitive.Root;
 
-export function Tooltip({ content, children, side = 'top', align = 'center', delay = 200 }: TooltipProps) {
-  const [isVisible, setIsVisible] = React.useState(false);
-  const [timeoutId, setTimeoutId] = React.useState<ReturnType<typeof setTimeout> | null>(null);
+const TooltipTrigger = TooltipPrimitive.Trigger;
 
-  const showTooltip = () => {
-    const id = setTimeout(() => setIsVisible(true), delay);
-    setTimeoutId(id);
-  };
-
-  const hideTooltip = () => {
-    if (timeoutId) clearTimeout(timeoutId);
-    setIsVisible(false);
-  };
-
-  const sideClasses = {
-    top: 'bottom-full left-1/2 -translate-x-1/2 mb-2',
-    bottom: 'top-full left-1/2 -translate-x-1/2 mt-2',
-    left: 'right-full top-1/2 -translate-y-1/2 mr-2',
-    right: 'left-full top-1/2 -translate-y-1/2 ml-2',
-  };
-
-  const alignClasses = {
-    start: side === 'top' || side === 'bottom' ? 'left-0 -translate-x-0' : 'top-0 -translate-y-0',
-    center: '',
-    end: side === 'top' || side === 'bottom' ? 'right-0 -translate-x-0' : 'bottom-0 -translate-y-0',
-  };
-
-  const arrowClasses = {
-    top: 'bottom-[-4px] left-1/2 -translate-x-1/2 border-t-canvas-surface',
-    bottom: 'top-[-4px] left-1/2 -translate-x-1/2 border-b-canvas-surface',
-    left: 'right-[-4px] top-1/2 -translate-y-1/2 border-l-canvas-surface',
-    right: 'left-[-4px] top-1/2 -translate-y-1/2 border-r-canvas-surface',
-  };
-
-  if (!React.isValidElement(children)) {
-    throw new Error('Tooltip child must be a single React element');
+const TooltipContent = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & {
+    className?: string;
+    children?: React.ReactNode;
   }
-
-  return (
-    <span className="relative inline-block" onMouseEnter={showTooltip} onMouseLeave={hideTooltip} onFocus={showTooltip} onBlur={hideTooltip}>
-      {React.cloneElement(children as React.ReactElement<any>, {
-        onMouseEnter: showTooltip,
-        onMouseLeave: hideTooltip,
-        onFocus: showTooltip,
-        onBlur: hideTooltip,
-      })}
-      {isVisible && (
-        <div
-          className={cn(
-            'absolute z-50 px-3 py-1.5 text-xs font-medium text-white bg-text-heading rounded-lg shadow-glass whitespace-nowrap animate-fade-in',
-            sideClasses[side],
-            alignClasses[align]
-          )}
-        >
-          {content}
-          <div
-            className={cn(
-              'absolute w-0 h-0 border-2 border-transparent',
-              arrowClasses[side]
-            )}
-          />
-        </div>
+>(({ className, children, ...props }, ref) => (
+  <TooltipPrimitive.Portal>
+    <TooltipPrimitive.Content
+      ref={ref}
+      className={cn(
+        'z-50 overflow-hidden rounded-xl border border-canvas-border bg-canvas-surface px-3 py-1.5 text-sm text-text-heading shadow-glass animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+        className
       )}
-    </span>
-  );
-}
+      {...props}
+    >
+      {children}
+      <TooltipPrimitive.Arrow className="fill-canvas-surface border border-canvas-border" />
+    </TooltipPrimitive.Content>
+  </TooltipPrimitive.Portal>
+));
+TooltipContent.displayName = TooltipPrimitive.Content.displayName;
+
+export { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent };

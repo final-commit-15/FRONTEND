@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog } from '@/components/ui/Dialog';
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 
 interface ConfirmationDialogProps {
@@ -26,9 +26,12 @@ export function ConfirmationDialog({
   danger,
 }: ConfirmationDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onCancel} title={title}>
-      <p className="text-sm text-text-muted">{description}</p>
-      <div className="flex justify-end gap-2 mt-6">
+    <Dialog open={open} onOpenChange={onCancel}>
+      <DialogHeader>
+        <DialogTitle>{title}</DialogTitle>
+        <DialogDescription>{description}</DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
         <Button variant="secondary" onClick={onCancel} disabled={loading}>
           {cancelLabel}
         </Button>
@@ -39,7 +42,7 @@ export function ConfirmationDialog({
         >
           {confirmLabel}
         </Button>
-      </div>
+      </DialogFooter>
     </Dialog>
   );
 }

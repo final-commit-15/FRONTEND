@@ -11,14 +11,14 @@ interface AgentPermissionsProps {
 export function AgentPermissions({ agent }: AgentPermissionsProps) {
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-        <ShieldCheck size={18} className="text-violet-400" /> Permissions
+      <h3 className="text-lg font-semibold text-text-heading mb-4 flex items-center gap-2">
+        <ShieldCheck size={18} className="text-brand-primary" /> Permissions
       </h3>
       <div className="flex flex-wrap gap-2">
         {agent.permissions?.map((permission) => (
           <Badge key={permission} variant="success">{permission}</Badge>
         ))}
-        {!agent.permissions?.length && <p className="text-base-500">No permissions assigned.</p>}
+        {!agent.permissions?.length && <p className="text-text-muted">No permissions assigned.</p>}
       </div>
     </Card>
   );

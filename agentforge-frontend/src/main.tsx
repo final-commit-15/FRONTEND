@@ -5,6 +5,7 @@ import { initializeAuth } from "./store/authStore";
 import { registerSW } from "virtual:pwa-register";
 
 import App from "./App";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -27,7 +28,9 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>
 );

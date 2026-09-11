@@ -28,24 +28,26 @@ export const EXECUTION_STATUSES = [
 ] as const;
 
 // ─── Color mapping for badges / status indicators ────────────
+// Contrast-safe in both themes: tinted bg + strong text + matching border.
+// Uses only tokens defined in tailwind.config.js / index.css.
 export const STATUS_COLORS: Record<string, string> = {
   // Agent statuses
-  active: 'bg-success-500/20 text-success-500 border-success-500/30',
-  inactive: 'bg-base-700 text-base-400 border-base-600',
+  active: 'bg-success-50 text-success-600 border-success-500/30',
+  inactive: 'bg-canvas-surface text-text-muted border-canvas-border',
 
   // Task / execution statuses
-  pending: 'bg-warning-500/20 text-warning-500 border-warning-500/30',
-  running: 'bg-info-500/20 text-info-500 border-info-500/30',
-  completed: 'bg-success-500/20 text-success-500 border-success-500/30',
-  failed: 'bg-error-500/20 text-error-500 border-error-500/30',
-  cancelled: 'bg-error-500/20 text-error-500 border-error-500/30',
-  queued: 'bg-warning-500/20 text-warning-500 border-warning-500/30',
+  pending: 'bg-warning-50 text-warning-600 border-warning-500/30',
+  running: 'bg-info-50 text-info-600 border-info-500/30',
+  completed: 'bg-success-50 text-success-600 border-success-500/30',
+  failed: 'bg-error-50 text-error-600 border-error-500/30',
+  cancelled: 'bg-error-50 text-error-600 border-error-500/30',
+  queued: 'bg-warning-50 text-warning-600 border-warning-500/30',
 
   // Generic variants used by Badge's `variant` prop
-  default: 'bg-electric-500/20 text-electric-400 border-electric-500/30',
-  success: 'bg-success-500/20 text-success-500 border-success-500/30',
-  warning: 'bg-warning-500/20 text-warning-500 border-warning-500/30',
-  error: 'bg-error-500/20 text-error-500 border-error-500/30',
-  info: 'bg-info-500/20 text-info-500 border-info-500/30',
-  neutral: 'bg-base-800 text-base-300 border-base-700',
+  default: 'bg-brand-primary/10 text-brand-primary border-brand-primary/20',
+  success: 'bg-success-50 text-success-600 border-success-500/30',
+  warning: 'bg-warning-50 text-warning-600 border-warning-500/30',
+  error: 'bg-error-50 text-error-600 border-error-500/30',
+  info: 'bg-info-50 text-info-600 border-info-500/30',
+  neutral: 'bg-canvas-surface text-text-body border-canvas-border',
 };

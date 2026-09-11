@@ -17,16 +17,16 @@ export function TaskList({ tasks, onDelete }: TaskListProps) {
 
   // ─── Table columns ──────────────────────────────────────────
   const columns: TableColumn<Task>[] = [
-    {
-      key: 'name',
-      label: 'Name',
+{
+      key: 'title',
+      label: 'Title',
       render: (_, row) => (
         <div>
-          <Link to={`/tasks/${row.id}`} className="font-medium text-white hover:text-electric-400">
-            {row.name}
+          <Link to={`/tasks/${row.id}`} className="font-medium text-text-heading hover:text-brand-secondary">
+            {row.title}
           </Link>
           {row.description && (
-            <p className="text-xs text-base-500 mt-1 truncate max-w-xs">{row.description}</p>
+            <p className="text-xs text-text-muted mt-1 truncate max-w-xs">{row.description}</p>
           )}
         </div>
       ),
@@ -42,12 +42,12 @@ export function TaskList({ tasks, onDelete }: TaskListProps) {
       render: (_, row) => {
         if (row.assigned_agent_id && row.assigned_agent_name) {
           return (
-            <Link to={`/agents/${row.assigned_agent_id}`} className="hover:text-electric-400">
+            <Link to={`/agents/${row.assigned_agent_id}`} className="text-text-body hover:text-brand-secondary">
               {row.assigned_agent_name}
             </Link>
           );
         }
-        return <span className="text-base-500">Unassigned</span>;
+        return <span className="text-text-muted">Unassigned</span>;
       },
     },
     {
@@ -58,12 +58,12 @@ export function TaskList({ tasks, onDelete }: TaskListProps) {
     {
       key: 'created_at',
       label: 'Created',
-      render: (value) => <span className="text-base-400">{formatDate(value as string)}</span>,
+      render: (value) => <span className="text-text-muted">{formatDate(value as string)}</span>,
     },
     {
       key: 'updated_at',
       label: 'Updated',
-      render: (value) => <span className="text-base-400">{formatRelativeTime(value as string)}</span>,
+      render: (value) => <span className="text-text-muted">{formatRelativeTime(value as string)}</span>,
     },
     {
       key: 'id',
@@ -71,7 +71,7 @@ export function TaskList({ tasks, onDelete }: TaskListProps) {
       render: (_, row) => (
         <Dropdown
           trigger={
-            <button className="p-1.5 rounded-lg text-base-500 hover:text-white hover:bg-base-800 transition-colors">
+            <button className="p-1.5 rounded-lg text-text-muted hover:text-text-heading hover:bg-canvas-surface transition-colors">
               <MoreVertical size={16} />
             </button>
           }
@@ -79,13 +79,13 @@ export function TaskList({ tasks, onDelete }: TaskListProps) {
           <div className="w-40 p-1">
             <Link
               to={`/tasks/${row.id}`}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-base-300 hover:bg-base-800 rounded-lg"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-text-body hover:bg-canvas-surface rounded-lg"
             >
               <Eye size={16} /> View
             </Link>
             <Link
               to={`/tasks/${row.id}/edit`}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-base-300 hover:bg-base-800 rounded-lg"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-text-body hover:bg-canvas-surface rounded-lg"
             >
               <Edit size={16} /> Edit
             </Link>
