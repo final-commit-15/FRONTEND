@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Mail, UserPlus, UserCheck, UserX, MoreHorizontal, Shield, Code, Layout, Smartphone, Server, Database, Zap, Monitor, Settings, AlertTriangle, CheckCircle2, X, Loader2, Target, Brain, Trash2, Users, Globe, GraduationCap, PenTool, Laptop, HardDrive, Cpu, Cloud, Database as DatabaseIcon, GitBranch, Briefcase, ClipboardList, Wrench, BarChart2, Palette, Lock, FileText, Headphones } from 'lucide-react';
+import { Plus, Search, Mail, UserPlus, UserCheck, UserX, MoreHorizontal, Shield, Code, Layout, Smartphone, Server, Database, Zap, Monitor, Settings, AlertTriangle, CheckCircle2, X, Loader2, Target, Brain, Trash2, Users, Globe, GraduationCap, PenTool, Laptop, HardDrive, Cpu, Cloud, Database as DatabaseIcon, GitBranch, Briefcase, ClipboardList, Wrench, BarChart2, Palette, Lock, FileText, Headphones, ChevronDown } from 'lucide-react';
 import { Suspense } from 'react';
 
 import { teamMembersApi } from '@/api/team_members';
@@ -12,40 +12,27 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/DropdownMenu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
-import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { TeamRole, TEAM_MEMBER_ROLES, getDepartmentForRole, getRoleLabel } from '@/lib/teamRoles';
+import { TeamRole, TEAM_MEMBER_ROLES, TEAMS, getDepartmentForRole, getRoleLabel } from '@/lib/teamRoles';
 
 const ROLE_ICONS: Record<string, React.ElementType> = {
-  frontend_web_developer: Layout,
-  backend_web_developer: Server,
-  full_stack_developer: Code,
-  mobile_app_developer: Smartphone,
-  android_developer: Smartphone,
-  ios_developer: Smartphone,
+  frontend_developer: Layout,
+  backend_developer: Server,
+  system_architect: Shield,
+  app_developer: Smartphone,
+  database_administrator: DatabaseIcon,
   devops_engineer: Settings,
-  cloud_engineer: Cloud,
-  ai_ml_engineer: Brain,
+  data_scientist: Brain,
   data_engineer: DatabaseIcon,
-  qa_engineer: AlertTriangle,
-  manual_tester: CheckCircle2,
-  automation_tester: Zap,
-  performance_tester: BarChart2,
-  project_manager: Shield,
-  product_manager: Target,
-  scrum_master: GitBranch,
-  business_analyst: ClipboardList,
-  ui_designer: Palette,
-  ux_designer: Brain,
+  tester: AlertTriangle,
+  quality_analyst: CheckCircle2,
   ui_ux_designer: Palette,
-  graphic_designer: PenTool,
   security_engineer: Lock,
-  technical_writer: FileText,
-  support_engineer: Headphones,
+  full_stack_developer: Code,
 };
 
 const DEPARTMENT_COLORS: Record<string, string> = {
@@ -127,10 +114,14 @@ function MemberCard({ member, removeMutation }: { member: any; removeMutation: a
   const deptColor = DEPARTMENT_COLORS[department] || 'bg-gray-500/20 text-gray-400';
   const statusColor = STATUS_COLORS[member.status] || 'bg-gray-500/20 text-gray-400';
   const RoleIcon = ROLE_ICONS[member.role] || Code;
+  const isMock = member.member_type === 'mock_user';
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
+
+  const roleLabel = getRoleLabel(member.role);
+  const roleDisplay = isMock ? roleLabel.toUpperCase() : roleLabel;
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -142,21 +133,39 @@ function MemberCard({ member, removeMutation }: { member: any; removeMutation: a
               <AvatarFallback>{getInitials(member.full_name)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <h3 className="font-semibold text-text-heading truncate">{member.full_name}</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold text-text-heading truncate">{member.full_name}</h3>
+                {isMock && (
+                  <Badge variant="error" className="text-[10px]">
+                    MOCK USER
+                  </Badge>
+                )}
+              </div>
               <p className="text-sm text-text-muted truncate">{member.email}</p>
+              {member.employment_id && (
+                <p className="text-xs text-text-muted truncate">ID: {member.employment_id}</p>
+              )}
             </div>
           </div>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-canvas-border">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge className={deptColor}>
               <RoleIcon className="h-3 w-3 mr-1" />
-              {getRoleLabel(member.role)}
+              {roleDisplay}
+            </Badge>
+            <Badge className="text-[10px] bg-gray-500/10 text-gray-600">
+              {department}
             </Badge>
             <Badge className={STATUS_COLORS[member.status] || 'bg-gray-500/20 text-gray-400'}>
               {member.status}
             </Badge>
+            {isMock && (
+              <Badge variant="error" className="text-[10px]">
+                MOCK USER
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -175,11 +184,14 @@ export function TeamMembersPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [openTeam, setOpenTeam] = useState<string | null>(null);
   const [inviteFormData, setInviteFormData] = useState({
     email: '',
     full_name: '',
-    role: 'frontend_web_developer' as any,
-    department: 'Engineering',
+    employment_id: '',
+    team: 'Frontend Team',
+    role: 'frontend_developer' as any,
+    department: 'Frontend Team',
     github_username: '',
     avatar_url: '',
   });
@@ -190,13 +202,15 @@ export function TeamMembersPage() {
     retry: false,
   });
 
+  const mockMembers = (data || []).filter((m: any) => m.member_type === 'mock_user');
+
   const inviteMutation = useMutation({
     mutationFn: (payload: any) => teamMembersApi.createInvitation(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-members'] });
       addToast({ type: 'success', title: 'Invitation sent', description: 'Invitation sent successfully.' });
       setShowInviteDialog(false);
-      setInviteFormData({ email: '', full_name: '', role: 'frontend_web_developer', department: 'Engineering', github_username: '', avatar_url: '' });
+      setInviteFormData({ email: '', full_name: '', employment_id: '', team: 'Frontend Team', role: 'frontend_developer', department: 'Frontend Team', github_username: '', avatar_url: '' });
     },
     onError: (error: any) => {
       addToast({ type: 'error', title: 'Failed to send invitation', description: error.message });
@@ -247,12 +261,12 @@ export function TeamMembersPage() {
     },
   });
 
-  if (isLoading) {
+if (isLoading) {
     return (
       <div className="space-y-6 animate-fade-in">
         <Skeleton variant="title" className="w-56" />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {[0, 1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} variant="card" className="h-64" />
           ))}
         </div>
@@ -261,15 +275,27 @@ export function TeamMembersPage() {
   }
 
   const members = data || [];
-  const filteredMembers = members.filter(m =>
-    m.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    m.email.toLowerCase().includes(search.toLowerCase()) ||
-    m.role.toLowerCase().includes(search.toLowerCase())
+  const filteredMembers = members.filter((m: any) =>
+    String(m.full_name ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    String(m.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    String(m.role ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    String(m.employment_id ?? m.employmentId ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    String(m.team ?? m.department ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
   const handleRoleChange = (role: string) => {
     const department = getDepartmentForRole(role as any);
-    setInviteFormData(prev => ({ ...prev, role, department }));
+    setInviteFormData(prev => ({ ...prev, role, department, team: department }));
+  };
+
+  const handleTeamChange = (team: string) => {
+    const firstRole = TEAM_MEMBER_ROLES.find(r => r.department === team);
+    setInviteFormData(prev => ({
+      ...prev,
+      team,
+      department: team,
+      role: firstRole ? firstRole.value : prev.role,
+    }));
   };
 
   return (
@@ -303,46 +329,77 @@ export function TeamMembersPage() {
       </div>
 
       <div className="pt-8">
-        <h2 className="font-semibold text-text-heading mb-4">Team Members</h2>
-        
-{filteredMembers.length === 0 ? (
-        <EmptyState
-          title={search ? 'No matching members' : 'No team members yet'}
-          description={search ? 'Try adjusting your search' : 'Invite your first team member to get started'}
-          action={<Button onClick={() => setShowInviteDialog(true)} icon={<UserPlus size={18} />}>Invite Member</Button>}
-        />
-      ) : (
-        <div className="space-y-6">
-          {(() => {
-            const departments = TEAM_MEMBER_ROLES.reduce((acc: Record<string, TeamRole[]>, role) => {
-              if (!acc[role.department]) {
-                acc[role.department] = [];
-              }
-              acc[role.department] = [...acc[role.department], role];
-              return acc;
-            }, {});
-            
-            return Object.entries(departments).map(([dept, roles]) => {
-              const deptMembers = filteredMembers.filter(m => roles.map(r => r.value).includes(m.role));
-              if (deptMembers.length === 0) return null;
-              
-              return (
-                <div key={dept} className="space-y-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-text-heading">{dept}</h3>
-                    <Badge variant="default" className="text-xs">{deptMembers.length} members</Badge>
+        <h2 className="font-semibold text-text-heading mb-4">Teams</h2>
+
+        {(() => {
+          const mockMembersList = filteredMembers.filter((m: any) => m.member_type === 'mock_user');
+          if (mockMembersList.length === 0) return null;
+          return (
+            <div className="space-y-4 pb-8">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-text-heading">Mock Members</h2>
+                <Badge variant="error" className="text-xs">MOCK USER</Badge>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {mockMembersList.map((member: any) => (
+                  <MemberCard key={member.id} member={member} removeMutation={removeMutation} />
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      <div className="pt-8">
+        <h2 className="font-semibold text-text-heading mb-4">Teams</h2>
+
+        {filteredMembers.length === 0 ? (
+          <EmptyState
+            title={search ? 'No matching members' : 'No team members yet'}
+            description={search ? 'Try adjusting your search' : 'Invite your first team member to get started'}
+            action={<Button onClick={() => setShowInviteDialog(true)} icon={<UserPlus size={18} />}>Invite Member</Button>}
+          />
+        ) : (
+          <div className="space-y-4">
+            {(() => {
+              const teamOrder: string[] = [...(TEAMS as readonly string[])];
+              const activeTeam = openTeam ?? teamOrder.find((t) => filteredMembers.some((m: any) => String(m.team ?? m.department ?? '') === t)) ?? teamOrder[0];
+              return teamOrder.map((dept) => {
+                const deptMembers = filteredMembers.filter((m: any) => String(m.team ?? m.department ?? '') === dept);
+                const isOpen = activeTeam === dept;
+                return (
+                  <div key={dept} className="rounded-2xl border border-canvas-border overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => setOpenTeam(isOpen ? null : dept)}
+                      className="w-full flex items-center justify-between px-4 py-3 bg-canvas-surface/60 hover:bg-canvas-surface transition-colors"
+                      aria-expanded={isOpen}
+                    >
+                      <span className="flex items-center gap-2">
+                        <ChevronDown className={`h-4 w-4 text-text-muted transition-transform ${isOpen ? '' : '-rotate-90'}`} />
+                        <span className="font-semibold text-text-heading">{dept}</span>
+                      </span>
+                      <Badge variant="default" className="text-xs">{deptMembers.length} members</Badge>
+                    </button>
+                    {isOpen && (
+                      <div className="p-4">
+                        {deptMembers.length === 0 ? (
+                          <p className="text-sm text-text-muted">No members in this team yet. Invite by email + employment ID.</p>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {deptMembers.map((member: any) => (
+                              <MemberCard key={member.id} member={member} removeMutation={removeMutation} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {deptMembers.map(member => (
-                      <MemberCard key={member.id} member={member} removeMutation={removeMutation} />
-                    ))}
-                  </div>
-                </div>
-              );
-            });
-          })()}
-        </div>
-      )}
+                );
+              });
+            })()}
+          </div>
+        )}
       </div>
 
       {/* Invite Dialog */}
@@ -352,34 +409,51 @@ export function TeamMembersPage() {
             <DialogTitle>Invite Team Member</DialogTitle>
             <DialogDescription>Send an invitation to join your workspace.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); inviteMutation.mutate(inviteFormData); }} className="space-y-4">
+          <form id="invite-member-form" onSubmit={(e) => { e.preventDefault(); inviteMutation.mutate(inviteFormData); }} className="space-y-4">
             <div className="space-y-2">
-              <label className="label">Email</label>
+              <label className="label">Email ID *</label>
               <Input type="email" placeholder="colleague@company.com" value={inviteFormData.email} onChange={(e) => setInviteFormData({...inviteFormData, email: e.target.value})} required />
-            </div>
-            <div className="space-y-2">
-              <label className="label">Full Name</label>
-              <Input placeholder="John Doe" value={inviteFormData.full_name} onChange={(e) => setInviteFormData({...inviteFormData, full_name: e.target.value})} required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="label">Role</label>
-                <Select value={inviteFormData.role} onChange={handleRoleChange}>
-                  {TEAM_MEMBER_ROLES.map(role => (
-                    <option key={role.value} value={role.value}>{role.label}</option>
-                  ))}
-                </Select>
+                <label className="label">Full Name</label>
+                <Input placeholder="John Doe" value={inviteFormData.full_name} onChange={(e) => setInviteFormData({...inviteFormData, full_name: e.target.value})} required />
               </div>
               <div className="space-y-2">
-                <label className="label">Department (auto-filled)</label>
-                <Select value={inviteFormData.department} onChange={(v) => setInviteFormData({...inviteFormData, department: v})} disabled>
-                  <option value="Engineering">Engineering</option>
-                  <option value="QA">QA</option>
-                  <option value="Product">Product</option>
-                  <option value="Design">Design</option>
-                  <option value="Security">Security</option>
-                  <option value="Other">Other</option>
-                </Select>
+                <label className="label">Employment ID *</label>
+                <Input placeholder="EMP-1024" value={inviteFormData.employment_id} onChange={(e) => setInviteFormData({...inviteFormData, employment_id: e.target.value})} required />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="label">Team *</label>
+                <div className="relative">
+                  <select
+                    value={inviteFormData.team}
+                    onChange={(e) => handleTeamChange(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-canvas-border bg-canvas-surface px-4 py-2.5 pr-10 text-sm text-text-heading shadow-sm transition-all duration-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  >
+                    {(TEAMS as readonly string[]).map((team) => (
+                      <option key={team} value={team}>{team}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="label">Role</label>
+                <div className="relative">
+                  <select
+                    value={inviteFormData.role}
+                    onChange={(e) => handleRoleChange(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-canvas-border bg-canvas-surface px-4 py-2.5 pr-10 text-sm text-text-heading shadow-sm transition-all duration-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
+                  >
+                    {TEAM_MEMBER_ROLES.filter((role) => role.department === inviteFormData.team).map(role => (
+                      <option key={role.value} value={role.value}>{role.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -395,7 +469,7 @@ export function TeamMembersPage() {
           </form>
           <DialogFooter className="flex justify-end gap-3">
             <Button variant="ghost" onClick={() => setShowInviteDialog(false)}>Cancel</Button>
-            <Button type="submit" disabled={inviteMutation.isPending}>
+            <Button type="submit" form="invite-member-form" disabled={inviteMutation.isPending}>
               {inviteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Invitation'}
             </Button>
           </DialogFooter>

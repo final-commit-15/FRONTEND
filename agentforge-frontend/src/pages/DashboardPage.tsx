@@ -1,10 +1,15 @@
 // src/pages/DashboardPage.tsx
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { analyticsApi } from '@/api/analytics';
 import { teamMembersApi } from '@/api/team_members';
+import { projectsApi } from '@/api/projects';
+import { tasksApi } from '@/api/tasks';
+import { requirementsApi } from '@/api/requirements';
 import { useAuth } from '@/hooks/useAuth';
 import { useSprintStore } from '@/store/sprintStore';
+import { useToast } from '@/hooks/useToast';
 
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -24,6 +29,9 @@ import { ActivityTimeline } from '@/components/dashboard/ActivityTimeline';
 import { UpcomingDeadlines } from '@/components/dashboard/UpcomingDeadlines';
 import { RecentDecisions } from '@/components/dashboard/RecentDecisions';
 import { BlockerSummary } from '@/components/dashboard/BlockerSummary';
+import { ModelTokenStatus } from '@/components/dashboard/ModelTokenStatus';
+import { ProviderErrorBoundary } from '@/components/dashboard/ProviderErrorBoundary';
+import { ProviderHealthCards } from '@/components/dashboard/ProviderHealthCards';
 import { BurndownChart } from '@/components/dashboard/BurndownChart';
 import { VelocityChart } from '@/components/dashboard/VelocityChart';
 import { FeatureProgressPie } from '@/components/dashboard/FeatureProgressPie';
@@ -31,8 +39,13 @@ import { DailyCompletedTasksChart } from '@/components/dashboard/DailyCompletedT
 import { BlockerTrendChart } from '@/components/dashboard/BlockerTrendChart';
 import { QAPassRateChart } from '@/components/dashboard/QAPassRateChart';
 import { SprintHealthIndicator } from '@/components/dashboard/SprintHealthIndicator';
-import { TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
+import { TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, Plus } from 'lucide-react';
 import { differenceInDays } from 'date-fns';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
+import { Card } from '@/components/ui/Card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
 
 function SectionLabel({ icon, title, hint }: { icon: React.ElementType; title: string; hint?: string }) {
   const Icon = icon;
@@ -52,6 +65,14 @@ function SectionLabel({ icon, title, hint }: { icon: React.ElementType; title: s
 export function DashboardPage() {
   const { user } = useAuth();
   const { activeSprintId } = useSprintStore();
+  const { addToast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedProjectId, setSelectedProjectId] = useState('');
+  const [activityText, setActivityText] = useState('');
+  const [deadlineTitle, setDeadlineTitle] = useState('');
+  const [deadlineDate, setDeadlineDate] = useState('');
+  const [decisionTitle, setDecisionTitle] = useState('');
+  const [decisionReason, setDecisionReason] = useState('');
 
   // ── Queries ──────────────────────────────────────────────────
   const dashboardKPIsQuery = useQuery({
@@ -125,6 +146,50 @@ export function DashboardPage() {
     queryKey: ['team-members'],
     queryFn: () => teamMembersApi.list(),
     retry: false,
+  });
+
+  const projectsQuery = useQuery({
+    queryKey: ['projects', 'dashboard-list'],
+    queryFn: () => projectsApi.list(),
+    retry: false,
+  });
+  const dashboardProjects: any[] = Array.isArray(projectsQuery.data) ? projectsQuery.data : [];
+  const selectedProject = dashboardProjects.find((p: any) => String(p.id) === selectedProjectId);
+
+  const logActivityMutation = useMutation({
+    mutationFn: (text: string) =>
+      requirementsApi.createDecision({ title: text.slice(0, 80), description: text, reason: 'Logged from dashboard activity' } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      queryClient.invalidateQueries({ queryKey: ['decisions', 'recent'] });
+      setActivityText('');
+      addToast({ type: 'success', title: 'Activity logged' });
+    },
+    onError: (e: any) => addToast({ type: 'error', title: 'Failed to log activity', description: e.message }),
+  });
+
+  const addDeadlineMutation = useMutation({
+    mutationFn: ({ title, date }: { title: string; date: string }) =>
+      tasksApi.create({ title, deadline: new Date(date).toISOString() } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['deadlines', 'upcoming'] });
+      setDeadlineTitle('');
+      setDeadlineDate('');
+      addToast({ type: 'success', title: 'Deadline added' });
+    },
+    onError: (e: any) => addToast({ type: 'error', title: 'Failed to add deadline', description: e.message }),
+  });
+
+  const addDecisionMutation = useMutation({
+    mutationFn: ({ title, reason }: { title: string; reason: string }) =>
+      requirementsApi.createDecision({ title, description: reason, reason } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['decisions', 'recent'] });
+      setDecisionTitle('');
+      setDecisionReason('');
+      addToast({ type: 'success', title: 'Decision recorded' });
+    },
+    onError: (e: any) => addToast({ type: 'error', title: 'Failed to record decision', description: e.message }),
   });
 
   // ── Loading / Error States ────────────────────────────────
@@ -221,6 +286,20 @@ export function DashboardPage() {
         <KpiGrid />
       </section>
 
+      {/* Model token availability */}
+      <section>
+        <SectionLabel icon={CheckCircle2} title="AI Model Tokens" hint="Which models have tokens now vs running out" />
+        <ProviderErrorBoundary>
+          <ModelTokenStatus />
+        </ProviderErrorBoundary>
+      </section>
+
+      {/* Provider Health Cards */}
+      <section>
+        <SectionLabel icon={CheckCircle2} title="AI Provider Health" hint="Live status, models, latency, and API keys" />
+        <ProviderHealthCards />
+      </section>
+
       {/* Sprint Progress, Story Points & Health */}
       <section>
         <SectionLabel icon={CheckCircle2} title="Sprint Status" hint="Progress, points, and AI health assessment" />
@@ -301,19 +380,85 @@ export function DashboardPage() {
         <BlockerSummary data={blockers} />
       </section>
 
-      {/* Activity Timeline & Upcoming Deadlines */}
+      {/* Project header: project, client, activity, members, progress */}
       <section>
-        <SectionLabel icon={Clock} title="Recent Activity" hint="Latest changes across the workspace" />
+        <Card className="p-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+            <div className="min-w-0">
+              <h2 className="text-lg font-semibold text-text-heading">
+                {selectedProject ? String(selectedProject.name) : 'Select a project'}
+              </h2>
+              <p className="text-sm text-text-muted">
+                {selectedProject
+                  ? `Client: ${String(selectedProject.client_name ?? '—')}${selectedProject.organization_name ? ` · ${String(selectedProject.organization_name)}` : ''}`
+                  : 'Pick a project to see client, activity, members and progress.'}
+              </p>
+              <div className="flex flex-wrap gap-4 mt-2 text-xs text-text-muted">
+                <span>Total activity: {(recentActivityQuery.data ?? []).length}</span>
+                <span>Members: {(teamMembersQuery.data as any[] ?? []).length}</span>
+                <span>Progress: {Math.round(sprintProgressQuery.data?.completion ?? 0)}%</span>
+              </div>
+            </div>
+            <div className="w-full md:w-72">
+              <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                <SelectTrigger><SelectValue placeholder="Choose project" /></SelectTrigger>
+                <SelectContent>
+                  {dashboardProjects.map((p: any) => (
+                    <SelectItem key={String(p.id)} value={String(p.id)}>{String(p.name)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* Activity Timeline & Upcoming Deadlines (writable) */}
+      <section>
+        <SectionLabel icon={Clock} title="Recent Activity" hint="Latest changes across the workspace — you can log an update below" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ActivityTimeline activities={recentActivityQuery.data || []} />
-          <UpcomingDeadlines deadlines={upcomingDeadlinesQuery.data || []} />
+          <div className="space-y-4">
+            <ActivityTimeline activities={recentActivityQuery.data || []} />
+            <Card className="p-4">
+              <h4 className="text-sm font-semibold text-text-heading mb-2">Log activity</h4>
+              <div className="flex gap-2">
+                <Input placeholder="What happened? e.g., Client approved login flow" value={activityText} onChange={(e) => setActivityText(e.target.value)} />
+                <Button size="sm" disabled={!activityText.trim() || logActivityMutation.isPending} onClick={() => logActivityMutation.mutate(activityText.trim())} icon={<Plus size={14} />}>
+                  Add
+                </Button>
+              </div>
+            </Card>
+          </div>
+          <div className="space-y-4">
+            <UpcomingDeadlines deadlines={upcomingDeadlinesQuery.data || []} />
+            <Card className="p-4">
+              <h4 className="text-sm font-semibold text-text-heading mb-2">Add deadline</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Input placeholder="Deadline title" value={deadlineTitle} onChange={(e) => setDeadlineTitle(e.target.value)} />
+                <Input type="date" value={deadlineDate} onChange={(e) => setDeadlineDate(e.target.value)} />
+              </div>
+              <Button size="sm" className="mt-2" disabled={!deadlineTitle.trim() || !deadlineDate || addDeadlineMutation.isPending} onClick={() => addDeadlineMutation.mutate({ title: deadlineTitle.trim(), date: deadlineDate })} icon={<Plus size={14} />}>
+                Add deadline
+              </Button>
+            </Card>
+          </div>
         </div>
       </section>
 
-      {/* Recent Decisions */}
+      {/* Recent Decisions (writable) */}
       <section>
-        <SectionLabel icon={CheckCircle2} title="Recent Decisions" hint="Architecture and planning decisions" />
+        <SectionLabel icon={CheckCircle2} title="Recent Decisions" hint="Architecture and planning decisions — record a new one below" />
         <RecentDecisions decisions={recentDecisionsQuery.data || []} />
+        <Card className="p-4 mt-4">
+          <h4 className="text-sm font-semibold text-text-heading mb-2">Record decision</h4>
+          <div className="grid grid-cols-1 gap-2">
+            <Input placeholder="Decision title" value={decisionTitle} onChange={(e) => setDecisionTitle(e.target.value)} />
+            <Textarea placeholder="Why was this decided?" value={decisionReason} onChange={(e) => setDecisionReason(e.target.value)} rows={2} />
+          </div>
+          <Button size="sm" className="mt-2" disabled={!decisionTitle.trim() || addDecisionMutation.isPending} onClick={() => addDecisionMutation.mutate({ title: decisionTitle.trim(), reason: decisionReason.trim() || 'Recorded from dashboard' })} icon={<Plus size={14} />}>
+            Record decision
+          </Button>
+        </Card>
       </section>
     </div>
   );

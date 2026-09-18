@@ -6,6 +6,8 @@ import { registerSW } from "virtual:pwa-register";
 
 import App from "./App";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { ProviderProvider } from "./context/ProviderContext";
+import { ToastProvider } from "./components/feedback/ToastProvider";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -29,7 +31,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <App />
+        <ProviderProvider>
+          <App />
+          <ToastProvider />
+        </ProviderProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </React.StrictMode>

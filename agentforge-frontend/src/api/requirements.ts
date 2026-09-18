@@ -24,8 +24,16 @@ import type {
   SprintAnalytics,
 } from '@/types/api';
 
-export const requirementsApi = {
-  // Requirements
+export interface ActivityEvent {
+  id: string;
+  event: string;
+  title: string;
+  detail?: string;
+  kind?: string;
+  stage?: string | null;
+  created_at?: string;
+}
+export const requirementsApi = {  // Requirements
   list: async (params?: { 
     search?: string;
     status?: string; 
@@ -67,6 +75,54 @@ export const requirementsApi = {
 
   process: async (requirementId: string): Promise<RequirementOut> => {
     const { data } = await apiClient.post<RequirementOut>(`/requirements/${requirementId}/process`);
+    return data;
+  },
+
+  // Pipeline control (manual Proceed / Retry / Cancel buttons)
+  nextStage: async (requirementId: string, payload: { stage: string; jobId?: string }): Promise<any> => {
+    const { data } = await apiClient.post<any>(`/requirements/${requirementId}/next-stage`, payload);
+    return data;
+  },
+
+  retryStage: async (requirementId: string, payload: { stage: string; jobId?: string }): Promise<any> => {
+    const { data } = await apiClient.post<any>(`/requirements/${requirementId}/retry-stage`, payload);
+    return data;
+  },
+
+  cancelPipeline: async (requirementId: string): Promise<any> => {
+    const { data } = await apiClient.post<any>(`/requirements/${requirementId}/cancel`, {});
+    return data;
+  },
+
+  getActivity: async (jobId: string): Promise<{ jobId: string; requirement_id: string; events: ActivityEvent[] }> => {
+    const { data } = await apiClient.get<{ jobId: string; requirement_id: string; events: ActivityEvent[] }>(`/pipeline-activity/${jobId}`);
+    return data;
+  },
+
+  getRequirementSprints: async (requirementId: string): Promise<{ requirement_id: string; sprints: any[] }> => {
+    const { data } = await apiClient.get<{ requirement_id: string; sprints: any[] }>(`/requirements/${requirementId}/sprints`);
+    return data;
+  },
+
+  getTimeline: async (requirementId: string): Promise<{ requirement_id: string; timeline: any }> => {
+    const { data } = await apiClient.get<{ requirement_id: string; timeline: any }>(`/requirements/${requirementId}/timeline`);
+    return data;
+  },
+
+  getMonitoring: async (requirementId: string): Promise<any> => {
+    const { data } = await apiClient.get<any>(`/monitoring/${requirementId}`);
+    return data;
+  },
+
+  getModelOwnership: async (requirementId?: string): Promise<{ provider: string; pipelineOwner: string; models: any[] }> => {
+    const { data } = await apiClient.get<{ provider: string; pipelineOwner: string; models: any[] }>('/intelligence/model-ownership', {
+      params: requirementId ? { requirement_id: requirementId } : undefined,
+    });
+    return data;
+  },
+
+  getHealth: async (): Promise<any> => {
+    const { data } = await apiClient.get<any>('/intelligence/health');
     return data;
   },
 
@@ -212,49 +268,4 @@ export const requirementsApi = {
   },
 };
 
-export const teamMembersApi = {
-  // Team Members
-  list: async (): Promise<any[]> => {
-    const { data } = await apiClient.get<any[]>('/team-members');
-    return data;
-  },
-
-  get: async (id: string): Promise<any> => {
-    const { data } = await apiClient.get<any>(`/team-members/${id}`);
-    return data;
-  },
-
-  create: async (payload: any): Promise<any> => {
-    const { data } = await apiClient.post<any>('/team-members', payload);
-    return data;
-  },
-
-  update: async (id: string, payload: any): Promise<any> => {
-    const { data } = await apiClient.patch<any>(`/team-members/${id}`, payload);
-    return data;
-  },
-
-  remove: async (id: string): Promise<void> => {
-    await apiClient.delete(`/team-members/${id}`);
-  },
-
-  // Invitations
-  listInvitations: async (): Promise<any[]> => {
-    const { data } = await apiClient.get<any[]>('/team-members/invitations');
-    return data;
-  },
-
-  createInvitation: async (payload: any): Promise<any> => {
-    const { data } = await apiClient.post<any>('/team-members/invitations', payload);
-    return data;
-  },
-
-  acceptInvitation: async (invitationId: string): Promise<any> => {
-    const { data } = await apiClient.post<any>(`/team-members/invitations/${invitationId}/accept`);
-    return data;
-  },
-
-  revokeInvitation: async (invitationId: string): Promise<void> => {
-    await apiClient.post(`/team-members/invitations/${invitationId}/revoke`);
-  },
-};
+// Team Members API is exported from ./team_members.ts to avoid duplicate exports

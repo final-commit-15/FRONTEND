@@ -1,8 +1,15 @@
 import { apiClient, getApiErrorMessage } from './client';
+import axios from 'axios';
 import type {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
+  OtpSendRequest,
+  OtpSendResponse,
+  OtpVerifyRequest,
+  OtpVerifyResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
 } from '@/types/api';
 import type { User } from '@/types/models';
 import { useAuthStore } from '@/store/authStore';
@@ -10,14 +17,11 @@ import { useAuthStore } from '@/store/authStore';
 export const authApi = {
   login: async (credentials: LoginRequest) => {
     try {
-      console.log('Attempting login...');
-      
       const { data: tokens } = await apiClient.post<LoginResponse>(
         "/auth/login",
         credentials
       );
 
-      // Store tokens in auth store
       useAuthStore.getState().setTokens(tokens);
       
       apiClient.defaults.headers.common.Authorization =
@@ -50,6 +54,56 @@ export const authApi = {
     }
   },
 
+  // ═══ Email OTP (AgentForge V2) ═══
+
+  /** Send an 8-digit OTP to the user's email. */
+  sendOtp: async (payload: OtpSendRequest): Promise<OtpSendResponse> => {
+    try {
+      const { data } = await apiClient.post<OtpSendResponse>('/auth/otp/send', payload);
+      // Treat delivery refusal as an error: the OTP is only persisted when
+      // SMTP actually accepted it (smtpAccepted === true), and success=false
+      // is returned by the backend for SMTP_ERROR / OTP_SEND_FAILED.
+      if (!data.success || data.smtpAccepted === false) {
+        throw new Error(data.message || 'Unable to deliver verification email.');
+      }
+      return data;
+    } catch (error) {
+      console.error('Send OTP error:', error);
+      throw new Error(getApiErrorMessage(error), { cause: error });
+    }
+  },
+
+  /**
+   * Verify the 8-digit OTP; on register also creates the Supabase user
+   * and workspace. Throws when the backend returns success === false
+   * (INVALID_OTP / OTP_EXPIRED / OTP_LOCKED) so error.message renders properly.
+   */
+  verifyOtp: async (payload: OtpVerifyRequest): Promise<OtpVerifyResponse> => {
+    try {
+      const { data } = await apiClient.post<OtpVerifyResponse>('/auth/otp/verify', payload);
+      if (!data.success) {
+        throw new Error(data.message || 'Verification failed. Please try again.');
+      }
+      return data;
+    } catch (error) {
+      console.error('Verify OTP error:', error);
+      if (axios.isAxiosError(error)) {
+        throw new Error(getApiErrorMessage(error), { cause: error });
+      }
+      throw error;
+    }
+  },
+
+  resetPassword: async (payload: ResetPasswordRequest): Promise<ResetPasswordResponse> => {
+    try {
+      const { data } = await apiClient.post<ResetPasswordResponse>('/auth/reset-password', payload);
+      return data;
+    } catch (error) {
+      console.error('Reset password error:', error);
+      throw new Error(getApiErrorMessage(error), { cause: error });
+    }
+  },
+
   me: async (): Promise<User> => {
     try {
       const { data } = await apiClient.get('/auth/me');
@@ -71,4 +125,4 @@ export const authApi = {
       delete apiClient.defaults.headers.common.Authorization;
     }
   },
-};
+} as const;

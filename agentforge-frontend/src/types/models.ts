@@ -3,9 +3,13 @@ export interface User {
   email: string;
   username: string;
   full_name: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
   role: "admin" | "developer" | "operator" | "user" | "viewer";
   is_active: boolean;
   is_verified: boolean;
+  active_workspace_id?: string;
   avatar_url?: string;
   created_at?: string;
 }
@@ -43,7 +47,7 @@ export interface Agent {
   updated_at: string;
 }
 
-export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+export type TaskStatus = 'todo' | 'queued' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
 
 export interface Task {
   id: string;
@@ -51,9 +55,18 @@ export interface Task {
   name: string; // Deprecated: use title
   description?: string;
   status: TaskStatus;
+  priority?: string;
+  category?: string;
+  deadline?: string;
   assigned_agent_id?: string;
   assigned_agent_name?: string;
+  assignee_name?: string;
+  assignee_email?: string;
   execution_count: number;
+  github_pr_url?: string;
+  github_branch?: string;
+  checklist?: any[];
+  checklist_completed?: number;
   created_at: string;
   updated_at: string;
 }

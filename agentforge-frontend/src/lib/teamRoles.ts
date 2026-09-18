@@ -5,43 +5,42 @@ export interface TeamRole {
 }
 
 export const TEAM_MEMBER_ROLES: readonly TeamRole[] = [
-  // Engineering
-  { value: 'frontend_web_developer', label: 'Frontend Web Developer', department: 'Engineering' },
-  { value: 'backend_web_developer', label: 'Backend Web Developer', department: 'Engineering' },
+  // Cross-cutting mock engineer (seeded by backend, cannot log in)
   { value: 'full_stack_developer', label: 'Full Stack Developer', department: 'Engineering' },
-  { value: 'mobile_app_developer', label: 'Mobile App Developer', department: 'Engineering' },
-  { value: 'android_developer', label: 'Android Developer', department: 'Engineering' },
-  { value: 'ios_developer', label: 'iOS Developer', department: 'Engineering' },
-  { value: 'devops_engineer', label: 'DevOps Engineer', department: 'Engineering' },
-  { value: 'cloud_engineer', label: 'Cloud Engineer', department: 'Engineering' },
-  { value: 'ai_ml_engineer', label: 'AI / ML Engineer', department: 'Engineering' },
-  { value: 'data_engineer', label: 'Data Engineer', department: 'Engineering' },
-  
-  // QA
-  { value: 'qa_engineer', label: 'QA Engineer', department: 'QA' },
-  { value: 'manual_tester', label: 'Manual Tester', department: 'QA' },
-  { value: 'automation_tester', label: 'Automation Tester', department: 'QA' },
-  { value: 'performance_tester', label: 'Performance Tester', department: 'QA' },
-  
-  // Product
-  { value: 'project_manager', label: 'Project Manager', department: 'Product' },
-  { value: 'product_manager', label: 'Product Manager', department: 'Product' },
-  { value: 'scrum_master', label: 'Scrum Master', department: 'Product' },
-  { value: 'business_analyst', label: 'Business Analyst', department: 'Product' },
-  
-  // Design
-  { value: 'ui_designer', label: 'UI Designer', department: 'Design' },
-  { value: 'ux_designer', label: 'UX Designer', department: 'Design' },
-  { value: 'ui_ux_designer', label: 'UI/UX Designer', department: 'Design' },
-  { value: 'graphic_designer', label: 'Graphic Designer', department: 'Design' },
-  
-  // Security
-  { value: 'security_engineer', label: 'Security Engineer', department: 'Security' },
-  
-  // Other
-  { value: 'technical_writer', label: 'Technical Writer', department: 'Other' },
-  { value: 'support_engineer', label: 'Support Engineer', department: 'Other' },
+  // Frontend Team
+  { value: 'frontend_developer', label: 'Frontend Developer', department: 'Frontend Team' },
+  { value: 'ui_ux_designer', label: 'UI/UX Designer', department: 'Frontend Team' },
+  { value: 'app_developer', label: 'App Developer', department: 'Frontend Team' },
+  // Backend Team
+  { value: 'backend_developer', label: 'Backend Developer', department: 'Backend Team' },
+  { value: 'system_architect', label: 'System Architect', department: 'Backend Team' },
+  { value: 'database_administrator', label: 'Database Administrator', department: 'Backend Team' },
+  { value: 'data_engineer', label: 'Data Engineer', department: 'Backend Team' },
+  // DevOps Team
+  { value: 'devops_engineer', label: 'DevOps Engineer', department: 'DevOps Team' },
+  // Cyber Security Team
+  { value: 'security_engineer', label: 'Security Engineer', department: 'Cyber Security Team' },
+  // QA Team
+  { value: 'quality_analyst', label: 'Quality Analyst', department: 'QA Team' },
+  { value: 'data_scientist', label: 'Data Scientist', department: 'QA Team' },
+  // Testing Team
+  { value: 'tester', label: 'Tester', department: 'Testing Team' },
+  // Deployment Team
+  { value: 'deployment_engineer', label: 'Deployment Engineer', department: 'Deployment Team' },
+  { value: 'release_manager', label: 'Release Manager', department: 'Deployment Team' },
 ] as const;
+
+export const TEAMS = [
+  'Frontend Team',
+  'Backend Team',
+  'DevOps Team',
+  'Cyber Security Team',
+  'QA Team',
+  'Testing Team',
+  'Deployment Team',
+] as const;
+
+export type TeamName = typeof TEAMS[number];
 
 export type TeamMemberRoleValue = typeof TEAM_MEMBER_ROLES[number]['value'];
 

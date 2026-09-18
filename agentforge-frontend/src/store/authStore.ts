@@ -1,17 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '@/types/models';
-import type { AuthTokens } from '@/types/api';
+import type { AuthTokens, WorkspaceBrief } from '@/types/api';
 import { apiClient } from '@/api/client';
 
 interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   user: User | null;
+  workspace: WorkspaceBrief | null;
   isAuthenticated: boolean;
 
   setTokens: (tokens: AuthTokens) => void;
   setUser: (user: User) => void;
+  setWorkspace: (workspace: WorkspaceBrief | null) => void;
   logout: () => void;
 }
 
@@ -21,6 +23,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       user: null,
+      workspace: null,
       isAuthenticated: false,
 
       setTokens: (tokens) =>
@@ -32,11 +35,14 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user) => set({ user }),
 
+      setWorkspace: (workspace) => set({ workspace }),
+
       logout: () =>
         set({
           accessToken: null,
           refreshToken: null,
           user: null,
+          workspace: null,
           isAuthenticated: false,
         }),
     }),
@@ -46,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         user: state.user,
+        workspace: state.workspace,
         isAuthenticated: state.isAuthenticated,
       }),
     }

@@ -11,10 +11,15 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function applyThemeClass(next: Theme) {
+  // Premium Black is locked — force dark regardless of requested value.
+  // Keeps ::selection / colorScheme / legacy light class all on OLED black.
+  const locked: Theme = 'dark';
   const root = document.documentElement;
-  root.classList.toggle('dark', next === 'dark');
-  root.classList.toggle('light', next === 'light');
-  root.style.colorScheme = next;
+  root.classList.add('dark');
+  root.classList.remove('light');
+  root.style.colorScheme = locked;
+  // persist lock so reloads never flash light
+  try { localStorage.setItem('theme', locked); } catch {}
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -23,22 +28,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('theme') as Theme | null;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = stored || (prefersDark ? 'dark' : 'light');
-    setThemeState(initialTheme);
-    applyThemeClass(initialTheme);
+    // Force premium black on mount — ignore stored / prefers
+    const locked: Theme = 'dark';
+    setThemeState(locked);
+    applyThemeClass(locked);
   }, []);
 
-  const setTheme = useCallback((newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
-    applyThemeClass(newTheme);
+  const setTheme = useCallback((_newTheme: Theme) => {
+    const locked: Theme = 'dark';
+    setThemeState(locked);
+    applyThemeClass(locked);
   }, []);
 
   const toggleTheme = useCallback(() => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  }, [theme, setTheme]);
+    // no-op: premium black is locked
+    const locked: Theme = 'dark';
+    setThemeState(locked);
+    applyThemeClass(locked);
+  }, []);
 
   if (!mounted) {
     return <>{children}</>;

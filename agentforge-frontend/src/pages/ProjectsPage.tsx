@@ -1,72 +1,52 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, FolderKanban, Archive, MoreVertical, Edit, Trash2, Eye, Settings, Users, Zap, ListChecks, CalendarDays, BookOpen, GitBranch, ArrowRight } from 'lucide-react';
-import { Suspense } from 'react';
+import { Plus, Search, FolderKanban, MoreVertical, Trash2, Eye, Users, ListChecks, CalendarDays, Mail, Loader2, Play, CheckCircle2, Archive } from 'lucide-react';
 
-import { apiClient } from '@/api/client';
+import { projectsApi } from '@/api/projects';
+import { getApiErrorMessage } from '@/api/client';
 import { useToast } from '@/hooks/useToast';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/DropdownMenu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/Dialog';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Textarea } from '@/components/ui/Textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 interface Project {
   id: string;
   name: string;
+  client_name: string;
+  organization_name?: string;
+  client_email?: string;
+  deadline?: string;
   description?: string;
-  status: 'active' | 'archived' | 'completed';
+  status: 'active' | 'archived' | 'completed' | 'upcoming';
   workspace_id: string;
-  created_by: string;
+  owner_id: string;
   created_at: string;
   updated_at: string;
-  member_count?: number;
-  task_count?: number;
 }
-
-interface ProjectListResponse {
-  items: Project[];
-  total: number;
-  page: number;
-  page_size: number;
-}
-
-const projectsApi = {
-  list: async (params?: { search?: string; status?: string; skip?: number; limit?: number }): Promise<ProjectListResponse> => {
-    const { data } = await apiClient.get<ProjectListResponse>('/projects', { params });
-    return data;
-  },
-  get: async (id: string): Promise<Project> => {
-    const { data } = await apiClient.get<Project>(`/projects/${id}`);
-    return data;
-  },
-  create: async (payload: { name: string; description?: string }): Promise<Project> => {
-    const { data } = await apiClient.post<Project>('/projects', payload);
-    return data;
-  },
-  update: async (id: string, payload: Partial<Project>): Promise<Project> => {
-    const { data } = await apiClient.patch<Project>(`/projects/${id}`, payload);
-    return data;
-  },
-  delete: async (id: string): Promise<void> => {
-    await apiClient.delete(`/projects/${id}`);
-  },
-};
 
 const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-500/20 text-green-400',
-  archived: 'bg-gray-500/20 text-gray-400',
-  completed: 'bg-blue-500/20 text-blue-400',
+  active: 'bg-green-500/20 text-green-400 border-green-500/20',
+  upcoming: 'bg-blue-500/20 text-blue-400 border-blue-500/20',
+  completed: 'bg-gray-500/20 text-gray-400 border-gray-500/20',
+  archived: 'bg-gray-500/20 text-gray-400 border-gray-500/20',
 };
 
-function ProjectCard({ project, onDelete }: { project: Project; onDelete: (id: string) => void }) {
+function ProjectCard({ project, onDelete, onSetActive, onSetCompleted }: {
+  project: Project;
+  onDelete: (id: string) => void;
+  onSetActive: (id: string) => void;
+  onSetCompleted: (id: string) => void;
+}) {
   const statusColor = STATUS_COLORS[project.status] || 'bg-gray-500/20 text-gray-400';
 
   return (
@@ -79,23 +59,30 @@ function ProjectCard({ project, onDelete }: { project: Project; onDelete: (id: s
             </div>
             <div>
               <h3 className="font-semibold text-text-heading truncate">{project.name}</h3>
-              <p className="text-sm text-text-muted">{project.member_count || 0} members</p>
+              <p className="text-sm text-text-muted">{project.client_name || 'No client'}</p>
             </div>
           </div>
           <Badge className={statusColor}>{project.status}</Badge>
         </div>
+        {project.organization_name && (
+          <p className="text-sm text-text-muted mb-2">{project.organization_name}</p>
+        )}
         {project.description && (
           <p className="text-text-body text-sm mb-4 line-clamp-2">{project.description}</p>
         )}
-        <div className="flex items-center gap-4 text-xs text-text-muted">
-          <span className="flex items-center gap-1">
-            <ListChecks className="h-3 w-3" />
-            {project.task_count || 0} tasks
-          </span>
-          <span className="flex items-center gap-1">
-            <Users className="h-3 w-3" />
-            {project.member_count || 0} members
-          </span>
+        <div className="flex flex-wrap gap-4 text-xs text-text-muted">
+          {project.deadline && (
+            <span className="flex items-center gap-1">
+              <CalendarDays className="h-3 w-3" />
+              {format(new Date(project.deadline), 'MMM d, yyyy')}
+            </span>
+          )}
+          {project.client_email && (
+            <span className="flex items-center gap-1">
+              <Mail className="h-3 w-3" />
+              {project.client_email}
+            </span>
+          )}
         </div>
       </div>
       <div className="px-4 py-3 border-t border-canvas-border flex items-center justify-between">
@@ -104,29 +91,46 @@ function ProjectCard({ project, onDelete }: { project: Project; onDelete: (id: s
             <Eye className="h-3.5 w-3.5" />
             <span>Open</span>
           </Button>
-          <Button variant="ghost" size="sm" className="gap-1" onClick={() => window.location.href = `/projects/${project.id}/settings`}>
-            <Settings className="h-3.5 w-3.5" />
-            <span>Settings</span>
-          </Button>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreVertical className="h-4 w-4" />
+        <div className="flex gap-1">
+          {project.status === 'upcoming' && (
+            <Button variant="primary" size="sm" className="gap-1" onClick={() => onSetActive(project.id)}>
+              <Play className="h-3.5 w-3.5" />
+              <span>Set Active</span>
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => window.location.href = `/projects/${project.id}`}>
-              <Eye className="h-4 w-4 mr-2" /> View Project
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => window.location.href = `/projects/${project.id}/settings`}>
-              <Settings className="h-4 w-4 mr-2" /> Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-error-600" onClick={() => onDelete(project.id)}>
-              <Trash2 className="h-4 w-4 mr-2" /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+          )}
+          {project.status === 'active' && (
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => onSetCompleted(project.id)}>
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span>Complete</span>
+            </Button>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => window.location.href = `/projects/${project.id}`}>
+                <Eye className="h-4 w-4 mr-2" /> View Project
+              </DropdownMenuItem>
+              {project.status === 'upcoming' && (
+                <DropdownMenuItem onClick={() => onSetActive(project.id)}>
+                  <Play className="h-4 w-4 mr-2" /> Set Active
+                </DropdownMenuItem>
+              )}
+              {project.status === 'active' && (
+                <DropdownMenuItem onClick={() => onSetCompleted(project.id)}>
+                  <CheckCircle2 className="h-4 w-4 mr-2" /> Mark Completed
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem className="text-error-600" onClick={() => onDelete(project.id)}>
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </Card>
   );
@@ -135,29 +139,63 @@ function ProjectCard({ project, onDelete }: { project: Project; onDelete: (id: s
 function ProjectsPageContent() {
   const navigate = useNavigate();
   const { addToast } = useToast();
+  const { user, workspace } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived' | 'completed'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived' | 'completed' | 'upcoming'>('all');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [createFormData, setCreateFormData] = useState({ name: '', description: '' });
+  const [createFormData, setCreateFormData] = useState({
+    name: '',
+    client_name: '',
+    organization_name: '',
+    client_email: '',
+    deadline: '',
+    description: '',
+  });
+  const activeWorkspaceId =
+    (user as { active_workspace_id?: string } | null)?.active_workspace_id ??
+    (workspace as { id?: string } | null)?.id;
 
-  const { data, isLoading, refetch } = useQuery<ProjectListResponse>({
+  const { data, isLoading, refetch } = useQuery<Project[]>({
     queryKey: ['projects', { search, statusFilter }],
-    queryFn: () => projectsApi.list({ search: search || undefined, status: statusFilter === 'all' ? undefined : statusFilter }),
+    queryFn: () => projectsApi.list(),
     retry: false,
   });
 
+  const emptyCreateForm = {
+    name: '',
+    client_name: '',
+    organization_name: '',
+    client_email: '',
+    deadline: '',
+    description: '',
+  };
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createFormData.name.trim() || !createFormData.client_name.trim()) {
+      addToast({ type: 'error', title: 'Missing fields', description: 'Project name and client name are required.' });
+      return;
+    }
+    if (!createFormData.deadline) {
+      addToast({ type: 'error', title: 'Deadline required', description: 'Pick a project deadline to continue.' });
+      return;
+    }
+    createMutation.mutate(createFormData);
+  };
+
   const createMutation = useMutation({
-    mutationFn: (payload: { name: string; description?: string }) => projectsApi.create(payload),
+    mutationFn: (payload: any) => projectsApi.create({ ...payload, status: 'upcoming' }),
     onSuccess: (project) => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
-      addToast({ type: 'success', title: 'Project created', description: `${project.name} has been created.` });
+      addToast({ type: 'success', title: 'Project created', description: `${project.name} has been created with upcoming status.` });
       setShowCreateDialog(false);
-      setCreateFormData({ name: '', description: '' });
-      navigate(`/projects/${project.id}`);
+      setCreateFormData({ ...emptyCreateForm });
     },
     onError: (error: any) => {
-      addToast({ type: 'error', title: 'Failed to create project', description: error.message });
+      const msg = getApiErrorMessage(error);
+      console.error('[Projects] Create failed:', error?.response?.data ?? error);
+      addToast({ type: 'error', title: 'Failed to create project', description: msg });
     },
   });
 
@@ -168,7 +206,35 @@ function ProjectsPageContent() {
       addToast({ type: 'success', title: 'Project deleted', description: 'Project has been deleted.' });
     },
     onError: (error: any) => {
-      addToast({ type: 'error', title: 'Failed to delete project', description: error.message });
+      const msg = getApiErrorMessage(error);
+      console.error('[Projects] Delete failed:', error?.response?.data ?? error);
+      addToast({ type: 'error', title: 'Failed to delete project', description: msg });
+    },
+  });
+
+  const setActiveMutation = useMutation({
+    mutationFn: (id: string) => projectsApi.update(id, { status: 'active' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      addToast({ type: 'success', title: 'Project activated', description: 'Project is now active and will appear in AI Project Intake.' });
+    },
+    onError: (error: any) => {
+      const msg = getApiErrorMessage(error);
+      console.error('[Projects] Activate failed:', error?.response?.data ?? error);
+      addToast({ type: 'error', title: 'Failed to activate project', description: msg });
+    },
+  });
+
+  const setCompletedMutation = useMutation({
+    mutationFn: (id: string) => projectsApi.update(id, { status: 'completed' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      addToast({ type: 'success', title: 'Project completed', description: 'Project marked as completed.' });
+    },
+    onError: (error: any) => {
+      const msg = getApiErrorMessage(error);
+      console.error('[Projects] Complete failed:', error?.response?.data ?? error);
+      addToast({ type: 'error', title: 'Failed to complete project', description: msg });
     },
   });
 
@@ -185,11 +251,14 @@ function ProjectsPageContent() {
     );
   }
 
-  const projects = data?.items ?? [];
+  // Backend returns a plain array
+  const projects: Project[] = Array.isArray(data) ? data : [];
 
   const filteredProjects = projects.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()) ||
-    p.description?.toLowerCase().includes(search.toLowerCase())
+    (p.name?.toLowerCase().includes(search.toLowerCase()) ||
+    p.description?.toLowerCase().includes(search.toLowerCase()) ||
+    p.client_name?.toLowerCase().includes(search.toLowerCase())) &&
+    (statusFilter === 'all' || p.status === statusFilter)
   );
 
   return (
@@ -197,7 +266,7 @@ function ProjectsPageContent() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold text-text-heading">Projects</h1>
-          <p className="text-text-body mt-1">Manage your projects and workspaces.</p>
+          <p className="text-text-body mt-1">Manage your projects. Create as upcoming, then set active when ready for AI intake.</p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)} icon={<Plus size={18} />}>
           New Project
@@ -210,7 +279,7 @@ function ProjectsPageContent() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
         </div>
         <div className="flex gap-2">
-          {(['all', 'active', 'archived', 'completed'] as const).map(status => (
+          {(['all', 'upcoming', 'active', 'completed', 'archived'] as const).map(status => (
             <Button
               key={status}
               variant={statusFilter === status ? 'primary' : 'outline'}
@@ -232,31 +301,53 @@ function ProjectsPageContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {filteredProjects.map(project => (
-            <ProjectCard key={project.id} project={project} onDelete={deleteMutation.mutate} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              onDelete={deleteMutation.mutate}
+              onSetActive={setActiveMutation.mutate}
+              onSetCompleted={setCompletedMutation.mutate}
+            />
           ))}
         </div>
       )}
 
       {/* Create Project Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Create Project</DialogTitle>
-            <DialogDescription>Start a new project for your team.</DialogDescription>
+            <DialogDescription>Start a new project. It will be created with "Upcoming" status — set it to Active when ready for AI intake.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(createFormData); }} className="space-y-4">
+          <form id="create-project-form" onSubmit={handleCreate} className="space-y-4">
             <div className="space-y-2">
-              <label className="label">Project Name</label>
-              <Input placeholder="My Awesome Project" value={createFormData.name} onChange={(e) => setCreateFormData({...createFormData, name: e.target.value})} required />
+              <label className="label">Project Name *</label>
+              <Input placeholder="Smart Attendance System" value={createFormData.name} onChange={(e) => setCreateFormData({...createFormData, name: e.target.value})} required />
+            </div>
+            <div className="space-y-2">
+              <label className="label">Client Name *</label>
+              <Input placeholder="ABC College" value={createFormData.client_name} onChange={(e) => setCreateFormData({...createFormData, client_name: e.target.value})} required />
+            </div>
+            <div className="space-y-2">
+              <label className="label">Organization Name (optional)</label>
+              <Input placeholder="ABC College Hyderabad" value={createFormData.organization_name} onChange={(e) => setCreateFormData({...createFormData, organization_name: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="label">Client Email (optional)</label>
+              <Input type="email" placeholder="client@abccollege.edu" value={createFormData.client_email} onChange={(e) => setCreateFormData({...createFormData, client_email: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <label className="label">Deadline *</label>
+              <Input type="date" value={createFormData.deadline} onChange={(e) => setCreateFormData({...createFormData, deadline: e.target.value})} required />
             </div>
             <div className="space-y-2">
               <label className="label">Description (optional)</label>
-              <Input placeholder="Project description..." value={createFormData.description} onChange={(e) => setCreateFormData({...createFormData, description: e.target.value})} />
+              <Textarea placeholder="AI-powered attendance and monitoring system..." value={createFormData.description} onChange={(e) => setCreateFormData({...createFormData, description: e.target.value})} rows={3} />
             </div>
           </form>
           <DialogFooter className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
-            <Button type="submit" disabled={createMutation.isPending}>
+            <Button variant="ghost" type="button" onClick={() => setShowCreateDialog(false)}>Cancel</Button>
+            <Button type="submit" form="create-project-form" disabled={createMutation.isPending}>
               {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Project'}
             </Button>
           </DialogFooter>
@@ -265,8 +356,6 @@ function ProjectsPageContent() {
     </div>
   );
 }
-
-import { Loader2 } from 'lucide-react';
 
 export function ProjectsPage() {
   return <ProjectsPageContent />;

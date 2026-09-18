@@ -12,8 +12,9 @@ export type AgentType = (typeof AGENT_TYPES)[number];
 
 // ─── Status arrays for filters & dropdowns ──────────────────
 export const TASK_STATUSES = [
-  'pending',
-  'running',
+  'todo',
+  'queued',
+  'in_progress',
   'completed',
   'failed',
   'cancelled',

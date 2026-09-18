@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 import { STATUS_COLORS } from '../../lib/constants';
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'neutral';
+  variant?: 'default' | 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'outline';
   status?: string;
 }
 
@@ -17,6 +17,7 @@ export function Badge({ className, variant = 'neutral', status, children, ...pro
         error: 'bg-error-50 text-error-700 border-error-100',
         info: 'bg-info-50 text-info-700 border-info-100',
         neutral: 'bg-canvas-surface text-text-body border-canvas-border',
+        outline: 'bg-transparent text-text-muted border-canvas-border',
       }[variant]
     : undefined;
 

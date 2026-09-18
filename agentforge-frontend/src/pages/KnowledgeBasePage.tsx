@@ -4,6 +4,7 @@ import { Plus, Search, Upload, FileText, FolderOpen, MoreVertical, Eye, Edit, Tr
 import { Suspense } from 'react';
 
 import { apiClient } from '@/api/client';
+import { projectsApi } from '@/api/projects';
 import { useToast } from '@/hooks/useToast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -34,6 +35,8 @@ interface Document {
   uploaded_by: string;
   uploaded_by_name: string;
   workspace_id: string;
+  project_id?: string | null;
+  version?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -54,12 +57,13 @@ const documentsApi = {
     const { data } = await apiClient.get<Document>(`/knowledge-base/${id}`);
     return data;
   },
-  upload: async (file: File, metadata: { title: string; description?: string; tags?: string[] }): Promise<Document> => {
+  upload: async (file: File, metadata: { title: string; description?: string; tags?: string[]; project_id?: string }): Promise<Document> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', metadata.title);
     if (metadata.description) formData.append('description', metadata.description);
     if (metadata.tags) formData.append('tags', JSON.stringify(metadata.tags));
+    if (metadata.project_id) formData.append('project_id', metadata.project_id);
     const { data } = await apiClient.post<Document>('/knowledge-base/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
@@ -176,21 +180,30 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState<string>('');
+  const [projectId, setProjectId] = useState('');
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  const { data: kbProjects } = useQuery({
+    queryKey: ['projects', 'kb-list'],
+    queryFn: () => projectsApi.list(),
+    retry: false,
+  });
+  const projectOptions: any[] = Array.isArray(kbProjects) ? kbProjects : [];
+
   const handleUpload = async () => {
     if (!file) return;
-    
+
     setUploading(true);
     setProgress(0);
-    
+
     try {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('title', title || file.name);
       if (description) formData.append('description', description);
       if (tags) formData.append('tags', JSON.stringify(tags.split(',').map(t => t.trim()).filter(Boolean)));
+      if (projectId) formData.append('project_id', projectId);
       
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/knowledge-base/upload`, {
         method: 'POST',
@@ -258,6 +271,15 @@ function UploadDialog({ onClose }: { onClose: () => void }) {
           <Input placeholder="Brief description..." value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
         <div className="space-y-2">
+          <label className="label">Project (optional — links doc to a project; requirement updates go here)</label>
+          <Select value={projectId} onChange={(v) => setProjectId(v as string)}>
+            <option value="">No project</option>
+            {projectOptions.map((p: any) => (
+              <option key={String(p.id)} value={String(p.id)}>{String(p.name)}</option>
+            ))}
+          </Select>
+        </div>
+        <div className="space-y-2">
           <label className="label">Tags (comma separated)</label>
           <Input placeholder="tag1, tag2, tag3" value={tags} onChange={(e) => setTags(e.target.value)} />
         </div>
@@ -286,7 +308,15 @@ export function KnowledgeBasePage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<'all' | Document['category']>('all');
+  const [projectFilter, setProjectFilter] = useState('');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+
+  const { data: kbProjectList } = useQuery({
+    queryKey: ['projects', 'kb-filter'],
+    queryFn: () => projectsApi.list(),
+    retry: false,
+  });
+  const kbProjects: any[] = Array.isArray(kbProjectList) ? kbProjectList : [];
 
   const { data, isLoading, refetch } = useQuery<DocumentListResponse>({
     queryKey: ['knowledge-base', { search, categoryFilter }],
@@ -321,9 +351,10 @@ export function KnowledgeBasePage() {
   const documents = data?.items ?? [];
 
   const filteredDocuments = documents.filter(d =>
-    d.title.toLowerCase().includes(search.toLowerCase()) ||
+    (!projectFilter || String((d as any).project_id ?? '') === projectFilter) &&
+    (d.title.toLowerCase().includes(search.toLowerCase()) ||
     d.description?.toLowerCase().includes(search.toLowerCase()) ||
-    d.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
+    d.tags.some(t => t.toLowerCase().includes(search.toLowerCase())))
   );
 
   return (
@@ -331,19 +362,25 @@ export function KnowledgeBasePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-bold text-text-heading">Knowledge Base</h1>
-          <p className="text-text-body mt-1">Store and organize your team's documents and assets.</p>
+          <p className="text-text-body mt-1">Every project appears here. Store PDFs/docs per project and upload client requirement updates.</p>
         </div>
         <Button onClick={() => setShowUploadDialog(true)} icon={<Upload size={18} />}>
           Upload Document
         </Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-md">
           <Input placeholder="Search documents..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Select value={projectFilter} onChange={(v) => setProjectFilter(v as string)}>
+            <option value="">All projects</option>
+            {kbProjects.map((p: any) => (
+              <option key={String(p.id)} value={String(p.id)}>{String(p.name)}</option>
+            ))}
+          </Select>
           <Select value={categoryFilter} onChange={(v) => setCategoryFilter(v as any)}>
             <option value="all">All Types</option>
             <option value="document">Documents</option>

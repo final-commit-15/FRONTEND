@@ -13,7 +13,7 @@ export function TaskCreatePage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Create Task"
-        description="Define a new task for your agents"
+        description="Assign a task manually to a team member"
       />
       <TaskForm mode="create" />
     </div>

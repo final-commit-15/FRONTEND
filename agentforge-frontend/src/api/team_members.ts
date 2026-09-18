@@ -10,7 +10,7 @@ import type {
 export const teamMembersApi = {
   // Team Members
   list: async (): Promise<TeamMemberOut[]> => {
-    const { data } = await apiClient.get<TeamMemberOut[]>('/team-members');
+    const { data } = await apiClient.get<TeamMemberOut[]>('/team-members/');
     return data;
   },
 

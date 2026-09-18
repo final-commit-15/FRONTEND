@@ -63,7 +63,8 @@ apiClient.interceptors.response.use(
 
     const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
       originalRequest.url?.includes('/auth/register') ||
-      originalRequest.url?.includes('/auth/refresh');
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.includes('/auth/otp/');
 
     if (isAuthEndpoint) {
       return Promise.reject(error);
@@ -107,7 +108,7 @@ apiClient.interceptors.response.use(
 );
 
 export interface ApiErrorResponse {
-  detail?: string;
+  detail?: string | string[];
   message?: string;
   code?: string;
   status?: number;
@@ -123,7 +124,19 @@ export interface ApiResponse<T> {
 export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const response = error.response?.data as ApiErrorResponse | undefined;
-    if (response?.detail) return response.detail;
+    if (response?.detail) {
+      if (typeof response.detail === 'string') return response.detail;
+      if (Array.isArray(response.detail)) {
+        const parts = response.detail
+          .map((d) => {
+            if (typeof d === 'string') return d;
+            if (d && typeof d === 'object' && 'msg' in d) return String((d as { msg?: unknown }).msg ?? '');
+            return '';
+          })
+          .filter((s) => s.trim().length > 0);
+        if (parts.length) return parts.join('. ');
+      }
+    }
     if (response?.message) return response.message;
     if (error.code === 'ECONNABORTED') return 'Request timed out. Please try again.';
     if (!error.response) return 'Network error. Please check your connection.';

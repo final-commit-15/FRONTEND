@@ -11,25 +11,25 @@ const LoginPage = lazy(() => import('@/pages/LoginPage').then((m) => ({ default:
 const RegisterPage = lazy(() => import('@/pages/RegisterPage').then((m) => ({ default: m.RegisterPage })));
 const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPasswordPage').then((m) => ({ default: m.ForgotPasswordPage })));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })));
-const AgentsPage = lazy(() => import('@/pages/AgentsPage').then((m) => ({ default: m.AgentsPage })));
-const AgentDetailPage = lazy(() => import('@/pages/AgentDetailPage').then((m) => ({ default: m.AgentDetailPage })));
-const AgentCreatePage = lazy(() => import('@/pages/AgentCreatePage').then((m) => ({ default: m.AgentCreatePage })));
-const AgentEditPage = lazy(() => import('@/pages/AgentEditPage').then((m) => ({ default: m.AgentEditPage })));
+const ProjectIntakePage = lazy(() => import('@/pages/ProjectIntakePage').then((m) => ({ default: m.ProjectIntakePage })));
 const TasksPage = lazy(() => import('@/pages/TasksPage').then((m) => ({ default: m.TasksPage })));
 const TaskDetailPage = lazy(() => import('@/pages/TaskDetailPage').then((m) => ({ default: m.TaskDetailPage })));
 const TaskCreatePage = lazy(() => import('@/pages/TaskCreatePage').then((m) => ({ default: m.TaskCreatePage })));
+const TaskEditPage = lazy(() => import('@/pages/TaskEditPage').then((m) => ({ default: m.TaskEditPage })));
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage').then((m) => ({ default: m.AnalyticsPage })));
-const ActivityPage = lazy(() => import('@/pages/ActivityPage').then((m) => ({ default: m.ActivityPage })));
 const SettingsPage = lazy(() => import('@/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
-const IntegrationsPage = lazy(() => import('@/pages/IntegrationsPage').then((m) => ({ default: m.IntegrationsPage })));
 const ErrorBoundaryPage = lazy(() => import('@/pages/ErrorBoundaryPage').then((m) => ({ default: m.ErrorBoundaryPage })));
 // New pages
 const SprintJournalPage = lazy(() => import('@/pages/SprintJournalPage').then((m) => ({ default: m.SprintJournalPage })));
 const TeamMembersPage = lazy(() => import('@/pages/TeamMembersPage').then((m) => ({ default: m.TeamMembersPage })));
 const ProjectsPage = lazy(() => import('@/pages/ProjectsPage').then((m) => ({ default: m.ProjectsPage })));
+const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage').then((m) => ({ default: m.ProjectDetailPage })));
 const GitHubReviewsPage = lazy(() => import('@/pages/GitHubReviewsPage').then((m) => ({ default: m.GitHubReviewsPage })));
 const KnowledgeBasePage = lazy(() => import('@/pages/KnowledgeBasePage').then((m) => ({ default: m.KnowledgeBasePage })));
+const SprintsPage = lazy(() => import('@/pages/SprintsPage').then((m) => ({ default: m.SprintsPage })));
+const MonitorPage = lazy(() => import('@/pages/MonitorPage').then((m) => ({ default: m.MonitorPage })));
+const ReportsPage = lazy(() => import('@/pages/ReportsPage').then((m) => ({ default: m.ReportsPage })));
 
 // ─── Loading Fallback ───────────────────────────────────────────────────
 function PageLoadingFallback() {
@@ -111,20 +111,20 @@ export const router = createBrowserRouter([
     children: [
       { path: "dashboard", element: <DashboardPage /> },
       { path: "projects", element: <ProjectsPage /> },
+      { path: "projects/:projectId", element: <ProjectDetailPage /> },
+      { path: "ai-intake", element: <ProjectIntakePage /> },
       { path: "tasks", element: <TasksPage /> },
       { path: "tasks/new", element: <TaskCreatePage /> },
       { path: "tasks/:id", element: <TaskDetailPage /> },
-      { path: "sprint-journal", element: <SprintJournalPage /> },
-      { path: "team-members", element: <TeamMembersPage /> },
-      { path: "agents", element: <AgentsPage /> },
-      { path: "agents/new", element: <AgentCreatePage /> },
-      { path: "agents/:id", element: <AgentDetailPage /> },
-      { path: "agents/:id/edit", element: <AgentEditPage /> },
+      { path: "tasks/:id/edit", element: <TaskEditPage /> },
+      { path: "sprints", element: <SprintsPage /> },
+      { path: "teams", element: <TeamMembersPage /> },
+      { path: "team-members", element: <Navigate to="/teams" replace /> },
+      { path: "monitor", element: <MonitorPage /> },
+      { path: "reports", element: <ReportsPage /> },
       { path: "github-reviews", element: <GitHubReviewsPage /> },
       { path: "knowledge-base", element: <KnowledgeBasePage /> },
       { path: "analytics", element: <AnalyticsPage /> },
-      { path: "activity", element: <ActivityPage /> },
-      { path: "integrations", element: <IntegrationsPage /> },
       { path: "settings", element: <SettingsPage /> },
     ],
   },

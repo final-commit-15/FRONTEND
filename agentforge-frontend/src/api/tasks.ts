@@ -14,7 +14,7 @@ export type { TaskCreatePayload, TaskUpdatePayload };
 
 export const tasksApi = {
   list: async (params: TaskListParams = {}): Promise<TaskListResponse> => {
-    const { data } = await apiClient.get<TaskListResponse>('/tasks', { params });
+    const { data } = await apiClient.get<TaskListResponse>('/tasks/', { params });
     return data;
   },
 
@@ -24,7 +24,7 @@ export const tasksApi = {
   },
 
   create: async (payload: TaskCreatePayload): Promise<Task> => {
-    const { data } = await apiClient.post<Task>('/tasks', { ...payload, title: payload.title });
+    const { data } = await apiClient.post<Task>('/tasks/', { ...payload, title: payload.title });
     return data;
   },
 

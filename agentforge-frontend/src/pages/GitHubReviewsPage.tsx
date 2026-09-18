@@ -1,9 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, CheckCircle2, XCircle, Loader2, RefreshCw, ExternalLink, FolderKanban, GitBranch, Users, Clock, AlertTriangle, MessageSquare, Code, Search, Filter, ChevronDown } from 'lucide-react';
+import { ArrowRight, CheckCircle2, XCircle, Loader2, RefreshCw, ExternalLink, FolderKanban, GitBranch, Users, Clock, AlertTriangle, MessageSquare, Code, Search, Filter, ChevronDown, Lock, Monitor, BarChart3 } from 'lucide-react';
 import { Suspense } from 'react';
 
 import { apiClient } from '@/api/client';
+import { requirementsApi } from '@/api/requirements';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
@@ -153,7 +156,7 @@ function GitHubOnboarding() {
         </div>
         <h1 className="font-heading text-3xl font-bold text-text-heading mb-4">Connect your GitHub Organization</h1>
         <p className="text-text-muted text-lg max-w-2xl mx-auto mb-8">
-          Connect GitHub to review pull requests, track repository activity, and automate your development workflow with AI agents.
+          Connect GitHub to review pull requests, track repository activity, and automate your development workflow.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" icon={<GitBranch className="h-5 w-5" />} onClick={() => handleConnect('org')} disabled={isConnecting}>
@@ -194,10 +197,25 @@ function GitHubOnboarding() {
 
 function GitHubDashboard() {
   const { addToast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
   const [prState, setPrState] = useState<'open' | 'closed' | 'all'>('open');
   const [searchPR, setSearchPR] = useState('');
+
+  const sendToMonitorMutation = useMutation({
+    mutationFn: (commit: Commit) =>
+      requirementsApi.createBlocker({ title: `Commit: ${commit.message.slice(0, 80)}`, description: `By ${commit.author} · ${commit.sha.slice(0, 7)} · ${commit.url}`, priority: 'low', owner_id: String((user as any)?.id ?? '') } as any),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blockers'] });
+      addToast({ type: 'success', title: 'Sent to Monitor', description: 'Commit activity forwarded to the Monitor page.' });
+      navigate('/monitor');
+    },
+    onError: (error: any) => {
+      addToast({ type: 'error', title: 'Failed to send to Monitor', description: error.message });
+    },
+  });
 
   const { data: dashboard, isLoading, error, refetch } = useQuery<GitHubDashboard>({
     queryKey: ['github-dashboard'],
@@ -453,9 +471,17 @@ function GitHubDashboard() {
                         </span>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => window.open(commit.url, '_blank')} icon={<ExternalLink className="h-3.5 w-3.5" />}>
-                      View
-                    </Button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button variant="ghost" size="sm" onClick={() => sendToMonitorMutation.mutate(commit)} icon={<Monitor className="h-3.5 w-3.5" />}>
+                        Monitor
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => { addToast({ type: 'success', title: 'Sent to Reports', description: 'Commit activity included in the Reports view.' }); navigate('/reports'); }} icon={<BarChart3 className="h-3.5 w-3.5" />}>
+                        Reports
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => window.open(commit.url, '_blank')} icon={<ExternalLink className="h-3.5 w-3.5" />}>
+                        View
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -528,8 +554,6 @@ function GitHubDashboard() {
     </div>
   );
 }
-
-import { Lock } from 'lucide-react';
 
 export function GitHubReviewsPage() {
   return <GitHubDashboard />;

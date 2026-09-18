@@ -4,8 +4,9 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#050508" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#020203" />
+    <meta name="theme-color" content="#020203" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#020203" media="(prefers-color-scheme: light)" />
 
     <!-- Primary Meta Tags -->
     <title>AgentForge — Your AI Project Manager for Startup Teams</title>
@@ -60,28 +61,26 @@
     <!-- Sitemap & Robots -->
     <link rel="sitemap" href="/sitemap.xml" />
 
-    <!-- Theme bootstrap: avoid FOUC, default dark -->
+    <!-- Theme bootstrap: premium black locked — no FOUC, always OLED -->
     <script>
       (function () {
         try {
-          var stored = localStorage.getItem('theme');
-          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var theme = stored === 'light' || stored === 'dark' ? stored : prefersDark ? 'dark' : 'light';
-          document.documentElement.classList.toggle('dark', theme === 'dark');
-          document.documentElement.classList.toggle('light', theme === 'light');
-          document.documentElement.style.colorScheme = theme;
+          localStorage.setItem('theme', 'dark');
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+          document.documentElement.style.colorScheme = 'dark';
         } catch (e) {
           document.documentElement.classList.add('dark');
         }
       })();
     </script>
-    <script type="module" crossorigin src="/assets/index-DoAGa25e.js"></script>
+    <script type="module" crossorigin src="/assets/index-Bdr4QtCS.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-hePW80VL.js">
-    <link rel="modulepreload" crossorigin href="/assets/forms-Ce6Mit2O.js">
-    <link rel="modulepreload" crossorigin href="/assets/ui-pIZIIhaY.js">
+    <link rel="modulepreload" crossorigin href="/assets/forms-0bJU5Eiv.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-DrB7kb_c.js">
     <link rel="modulepreload" crossorigin href="/assets/state-B5f3MZx7.js">
-    <link rel="modulepreload" crossorigin href="/assets/vendor-Dul-y9CC.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-D42-BROl.css">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-B8WS0SrU.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-DG1wFG8L.css">
   <link rel="manifest" href="/manifest.webmanifest"></head>
   <body>
     <div id="root"></div>

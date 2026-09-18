@@ -42,6 +42,100 @@ export interface AuthTokens {
 export type LoginResponse = AuthTokens;
 export type RegisterResponse = AuthTokens;
 
+// ─── Email OTP (AgentForge V2) ─────────────────────────────────
+
+export interface OtpSendRequest {
+  email: string;
+  mode: "register" | "reset";
+  /** Explicit purpose ("signup", "login", "forgot_password", "invite");
+   *  falls back to the mode mapping (register->signup, reset->forgot_password). */
+  purpose?: "signup" | "login" | "forgot_password" | "invite";
+  password?: string;
+  first_name?: string;
+  last_name?: string;
+  organization_name?: string;
+  organization_logo?: string;
+  phone?: string;
+}
+
+export interface OtpSendResponse {
+  success: boolean;
+  message: string;
+  email: string;
+  mode: "register" | "reset";
+  purpose?: string;
+  errorType?: string;
+  /** Only true when the backend confirmed the SMTP server accepted the email. */
+  smtpAccepted?: boolean;
+  expiresIn?: number;
+  otpLength?: number;
+  resendAfter?: number;
+  retryAfter?: number;
+}
+
+export interface OtpVerifyRequest {
+  email: string;
+  token: string;
+  mode: "register" | "reset";
+  password?: string;
+  first_name?: string;
+  last_name?: string;
+  organization_name?: string;
+  organization_logo?: string;
+  phone?: string;
+}
+
+export interface ResetPasswordRequest {
+  reset_token: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface WorkspaceBrief {
+  id: string;
+  name: string;
+  description?: string | null;
+  owner_id: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  user: User;
+  workspace?: WorkspaceBrief | null;
+}
+
+export type OtpErrorMessageType =
+  | 'INVALID_FORMAT'
+  | 'INVALID_OTP'
+  | 'OTP_EXPIRED'
+  | 'OTP_LOCKED';
+
+export interface OtpVerifyResponse {
+  success: boolean;
+  message: string;
+  errorType?: OtpErrorMessageType | string;
+  user?: User | null;
+  workspace?: WorkspaceBrief | null;
+  session?: {
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+  } | null;
+  // Backward-compat top-level tokens (present ONLY on login-mode success)
+  access_token?: string;
+  refresh_token?: string;
+  token_type?: string;
+  // Issued after a successful password-reset OTP verification (mode="reset")
+  reset_token?: string;
+}
+
 // ─── Agents ───────────────────────────────────────────────────
 
 export interface AgentListParams {
@@ -236,42 +330,29 @@ export interface TaskCreatePayload {
   assigned_agent_id?: string;
 }
 
-export type TaskUpdatePayload = Partial<TaskCreatePayload>;
+export type TaskUpdatePayload = Partial<
+  TaskCreatePayload & { deadline?: string }
+>;
 
 // ─── Team Members & Invitations ────────────────────────────────
 
 export type TeamMemberRole = 
   // Engineering
-  | 'frontend_web_developer'
-  | 'backend_web_developer'
-  | 'full_stack_developer'
-  | 'mobile_app_developer'
-  | 'android_developer'
-  | 'ios_developer'
+  | 'frontend_developer'
+  | 'backend_developer'
+  | 'system_architect'
+  | 'app_developer'
+  | 'database_administrator'
   | 'devops_engineer'
-  | 'cloud_engineer'
-  | 'ai_ml_engineer'
+  | 'data_scientist'
   | 'data_engineer'
   // QA
-  | 'qa_engineer'
-  | 'manual_tester'
-  | 'automation_tester'
-  | 'performance_tester'
-  // Product
-  | 'project_manager'
-  | 'product_manager'
-  | 'scrum_master'
-  | 'business_analyst'
+  | 'tester'
+  | 'quality_analyst'
   // Design
-  | 'ui_designer'
-  | 'ux_designer'
   | 'ui_ux_designer'
-  | 'graphic_designer'
   // Security
-  | 'security_engineer'
-  // Other
-  | 'technical_writer'
-  | 'support_engineer';
+  | 'security_engineer';
 
 export type TeamMemberStatus = 'invited' | 'accepted' | 'active' | 'offline';
 

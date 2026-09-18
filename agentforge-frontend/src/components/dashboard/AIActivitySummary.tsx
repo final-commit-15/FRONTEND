@@ -87,7 +87,7 @@ export function AIActivitySummaryComponent({ data }: AIActivitySummaryProps) {
             <p className="font-medium text-brand-primary">AI Summary</p>
             <p className="text-sm text-text-muted mt-1">{data.summary}</p>
             <p className="text-xs text-text-muted mt-2">
-              Last run: {new Date(data.last_run).toLocaleString()}
+              Last run: {data.last_run ? new Date(data.last_run).toLocaleString() : '—'}
             </p>
           </div>
         </div>

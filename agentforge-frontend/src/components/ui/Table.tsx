@@ -2,9 +2,9 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 
 export interface TableColumn<T> {
-  key: keyof T;
+  key: keyof T | string;
   label: string;
-  render?: (value: T[keyof T], row: T) => React.ReactNode;
+  render?: (value: any, row: T) => React.ReactNode;
   className?: string;
 }
 
@@ -74,8 +74,8 @@ export function Table<T>({
                   className={cn('table-cell', col.className)}
                 >
                   {col.render
-                    ? col.render(row[col.key], row)
-                    : String(row[col.key] ?? '')}
+                    ? col.render((row as Record<string, unknown>)[String(col.key)], row)
+                    : String((row as Record<string, unknown>)[String(col.key)] ?? '')}
                 </td>
               ))}
             </tr>
