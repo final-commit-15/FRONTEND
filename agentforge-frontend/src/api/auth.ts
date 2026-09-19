@@ -56,7 +56,7 @@ export const authApi = {
 
   // ═══ Email OTP (AgentForge V2) ═══
 
-  /** Send an 8-digit OTP to the user's email. */
+  /** Send a 6-digit OTP to the user's email. */
   sendOtp: async (payload: OtpSendRequest): Promise<OtpSendResponse> => {
     try {
       const { data } = await apiClient.post<OtpSendResponse>('/auth/otp/send', payload);
@@ -74,7 +74,7 @@ export const authApi = {
   },
 
   /**
-   * Verify the 8-digit OTP; on register also creates the Supabase user
+   * Verify the 6-digit OTP; on register also creates the Supabase user
    * and workspace. Throws when the backend returns success === false
    * (INVALID_OTP / OTP_EXPIRED / OTP_LOCKED) so error.message renders properly.
    */

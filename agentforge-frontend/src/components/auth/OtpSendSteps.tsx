@@ -52,9 +52,9 @@ export function OtpSendSteps({
       detail:
         status === 'pending'
           ? 'Rolling a secure random code…'
-          : data?.otpLength
-            ? `${data.otpLength}-digit one-time code`
-            : '8-digit one-time code',
+: data?.otpLength
+              ? `${data.otpLength}-digit verification code`
+              : '6-digit verification code',
       state:
         status === 'pending'
           ? 'active'

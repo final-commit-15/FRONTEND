@@ -42,8 +42,8 @@ const registerSchema = z
 const otpSchema = z.object({
   token: z
     .string()
-    .length(8, 'Enter the 8-digit code')
-    .regex(/^\d{8}$/, 'Code must be 8 digits'),
+    .length(6, 'Enter the 6-digit verification code')
+    .regex(/^\d{6}$/, 'Code must be 6 digits'),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -164,7 +164,7 @@ export function RegisterPage() {
       addToast({
         type: 'success',
         title: 'Code resent',
-        description: `A new 8-digit code was sent to ${pendingData.email}.`,
+        description: `A new 6-digit verification code was sent to ${pendingData.email}.`,
       });
     } catch (error) {
       addToast({
@@ -194,7 +194,7 @@ export function RegisterPage() {
       addToast({
         type: 'success',
         title: 'Code sent',
-        description: `An 8-digit code was sent to ${data.email}.`,
+        description: `A 6-digit verification code was sent to ${data.email}.`,
       });
     } catch (error) {
       addToast({
@@ -256,7 +256,7 @@ export function RegisterPage() {
           <p className="text-text-body mt-2">
             {step === 'details'
               ? 'Set up your account and organization.'
-              : `Enter the 8-digit code sent to ${pendingData?.email || 'your email'}. After verification you'll sign in with the password you created.`}
+              : `Enter the 6-digit verification code sent to ${pendingData?.email || 'your email'}. After verification you'll sign in with the password you created.`}
           </p>
         </div>
 
@@ -402,11 +402,11 @@ export function RegisterPage() {
               </div>
 
               <Input
-                label="8-digit code"
+                label="6-digit verification code"
                 type="text"
                 inputMode="numeric"
-                maxLength={8}
-                placeholder="00000000"
+                maxLength={6}
+                placeholder="000000"
                 {...otpForm.register('token')}
                 error={otpForm.formState.errors.token?.message}
                 autoComplete="one-time-code"
